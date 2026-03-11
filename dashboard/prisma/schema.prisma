@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// 📌 FOYDALANUVCHILAR (USER)
+model User {
+  id            String       @id @default(uuid())
+  name          String
+  phone         String       @unique
+  password      String
+  role          Role         @default(AGENT)
+  averageScore  Float?
+  
+  calls         CallRecord[]
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+enum Role {
+  ROP
+  AGENT
+}
+
+// 📌 QO'NG'IROQLAR (CALL_RECORD)
+model CallRecord {
+  id            String       @id @default(uuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
+  
+  customerPhone String
+  durationSec   Int
+  audioUrl      String       
+  status        CallStatus   @default(COMPLETED)
+  
+  analysis      AiAnalysis?
+  
+  createdAt     DateTime     @default(now())
+}
+
+enum CallStatus {
+  COMPLETED
+  ANALYZING
+  FAILED
+}
+
+// 📌 AI TAHLILI (AI_ANALYSIS)
+model AiAnalysis {
+  id            String       @id @default(uuid())
+  callId        String       @unique
+  call          CallRecord   @relation(fields: [callId], references: [id], onDelete: Cascade)
+  
+  score         Int
+  summary       String       @db.Text
+  transcript    String?      @db.Text
+  
+  recommendedLessonId String?
+  lesson              Lesson? @relation(fields: [recommendedLessonId], references: [id])
+  
+  createdAt     DateTime     @default(now())
+}
+
+// 📌 DARSLIKLAR / TAVSIYALAR (LESSON)
+model Lesson {
+  id            String       @id @default(uuid())
+  title         String
+  url           String
+  type          String
+  
+  analyses      AiAnalysis[]
+  
+  createdAt     DateTime     @default(now())
+}
