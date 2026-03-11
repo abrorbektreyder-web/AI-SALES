@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Search, PhoneIncoming, AlertCircle } from "lucide-react";
+import { Search, PhoneIncoming, AlertCircle, Activity, ArrowUpRight } from "lucide-react";
 
 export default function Dashboard() {
   return (
@@ -30,7 +30,7 @@ export default function Dashboard() {
             <p className="text-xs text-white/50">Sotuv Rahbari (ROP)</p>
           </div>
           <div className="size-10 rounded-full bg-zinc-800 border-2 border-white/10 overflow-hidden">
-             {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
           </div>
         </div>
@@ -38,52 +38,75 @@ export default function Dashboard() {
 
       {/* Main Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Massive Number Overview */}
-        <Card className="md:col-span-2 bg-[#18181b] border-white/10 shadow-xl overflow-hidden relative group">
-          <div className="absolute inset-0 bg-blue-600/5 group-hover:bg-blue-600/10 transition-colors duration-500" />
-          <CardHeader>
-            <CardTitle className="text-white/60 text-sm font-medium tracking-wide">
-               BO'LIMNING BUGUNGI O'RTACHA BALI
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-end justify-between">
-            <div className="flex flex-col">
-              <span className="text-7xl font-bold font-space-grotesk text-transparent bg-clip-text bg-gradient-to-br from-emerald-400 to-cyan-400 drop-shadow-sm">
-                4.2
-              </span>
-              <span className="text-sm text-emerald-400 mt-2 flex items-center gap-1 font-medium">
-                <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
-                  +0.4 kechagiga nisbatan
-                </Badge>
-              </span>
-            </div>
+
+        {/* Premium Dashboard: Reimagined Circular Gauge Overview */}
+        <div className="md:col-span-2 bg-gradient-to-br from-[#18181b] to-[#121214] border border-white/5 rounded-2xl shadow-[0_0_40px_-15px_rgba(52,211,153,0.1)] relative overflow-hidden group p-6">
+          {/* Subtle background glow */}
+          <div className="absolute top-0 right-0 -mt-16 -mr-16 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" />
+          
+          <div className="flex flex-col h-full justify-between relative z-10">
+            <h3 className="text-white/50 text-xs font-semibold tracking-[0.2em] uppercase mb-8 flex items-center gap-2">
+              <Activity className="w-3.5 h-3.5" />
+              Bo'limning Bugungi O'rtacha Bali
+            </h3>
             
-            <div className="space-y-3 w-48 hidden sm:block">
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs text-white/60">
-                  <span>5 ball:</span>
-                  <span className="font-medium text-emerald-400">45%</span>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8 h-full">
+              {/* Left: Circular Score */}
+              <div className="flex items-center gap-6">
+                <div className="relative w-36 h-36">
+                  {/* SVG Circular Progress */}
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="18" cy="18" r="15.5" fill="none" className="stroke-white/5" strokeWidth="2.5" />
+                    {/* 4.2 / 5.0 = 84% -> strokeDashoffset = length * (1 - 0.84) -> 97.38 * 0.16 = 15.58 */}
+                    <circle cx="18" cy="18" r="15.5" fill="none" className="stroke-emerald-400" strokeWidth="2.5" strokeDasharray="97.38" strokeDashoffset="15.58" strokeLinecap="round" />
+                  </svg>
+                  {/* Inner Text */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-4xl font-bold text-white tracking-tight font-sans">
+                      4<span className="text-xl text-white/50 px-0.5">.</span>2
+                    </span>
+                    <span className="text-[10px] text-emerald-400/80 font-medium uppercase tracking-widest mt-1">/ 5.0</span>
+                  </div>
                 </div>
-                <Progress value={45} className="h-1 bg-white/5 [&>div]:bg-emerald-400" />
+                
+                <div className="flex flex-col gap-2">
+                  <Badge variant="outline" className="border-emerald-500/20 text-emerald-400 bg-emerald-500/5 px-3 py-1 font-normal w-fit">
+                    <ArrowUpRight className="w-3.5 h-3.5 mr-1" />
+                    +0.4 O'sish
+                  </Badge>
+                  <p className="text-xs text-white/40 max-w-[120px] leading-relaxed">
+                    Kechagiga nisbatan ijobiy dinamika saqlanib qolmoqda.
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs text-white/60">
-                  <span>4 ball:</span>
-                  <span className="font-medium text-cyan-400">30%</span>
+
+              {/* Right: Breakdown Bars */}
+              <div className="w-full md:w-64 space-y-4">
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs items-center">
+                    <span className="text-white/60 font-medium tracking-wide">5 BALL</span>
+                    <span className="font-bold text-emerald-400">45%</span>
+                  </div>
+                  <Progress value={45} className="h-1.5 bg-white/5 [&>div]:bg-emerald-400" />
                 </div>
-                <Progress value={30} className="h-1 bg-white/5 [&>div]:bg-cyan-400" />
-              </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs text-white/60">
-                  <span>1-3 ball:</span>
-                  <span className="font-medium text-rose-500">25%</span>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs items-center">
+                    <span className="text-white/60 font-medium tracking-wide">4 BALL</span>
+                    <span className="font-bold text-cyan-400">30%</span>
+                  </div>
+                  <Progress value={30} className="h-1.5 bg-white/5 [&>div]:bg-cyan-400" />
                 </div>
-                <Progress value={25} className="h-1 bg-white/5 [&>div]:bg-rose-500" />
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs items-center">
+                    <span className="text-white/60 font-medium tracking-wide">1-3 BALL</span>
+                    <span className="font-bold text-rose-500">25%</span>
+                  </div>
+                  <Progress value={25} className="h-1.5 bg-white/5 [&>div]:bg-rose-500" />
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Critical Alerts Zone */}
         <Card className="bg-[#18181b] border-rose-500/30 shadow-xl shadow-rose-500/5 hover:border-rose-500/50 transition-colors">
@@ -115,16 +138,16 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Placeholder for Leaderboard and Latest Calls (To be built next) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="bg-[#18181b] border-white/10 h-64 flex flex-col items-center justify-center text-white/30 border-dashed">
-             <h3 className="font-space-grotesk text-sm">Top Reyting (Leaderboard) Xaritasi</h3>
-             <p className="text-xs mt-2">Keyingi bosqichda ulanadi</p>
+          <h3 className="font-space-grotesk text-sm">Top Reyting (Leaderboard) Xaritasi</h3>
+          <p className="text-xs mt-2">Keyingi bosqichda ulanadi</p>
         </Card>
         <Card className="bg-[#18181b] border-white/10 h-64 flex flex-col items-center justify-center text-white/30 border-dashed">
-             <h3 className="font-space-grotesk text-sm">So'nggi Qo'ng'iroqlar jadvali</h3>
-             <p className="text-xs mt-2">Keyingi bosqichda ulanadi</p>
+          <h3 className="font-space-grotesk text-sm">So'nggi Qo'ng'iroqlar jadvali</h3>
+          <p className="text-xs mt-2">Keyingi bosqichda ulanadi</p>
         </Card>
       </div>
 
