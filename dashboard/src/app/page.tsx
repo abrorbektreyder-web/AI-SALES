@@ -174,7 +174,7 @@ export default function LandingChorusStyle() {
         {/* Subtle background audio waves */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none flex items-center justify-center gap-4">
           {Array.from({ length: 40 }).map((_, i) => (
-            <div key={i} className="w-4 bg-white rounded-full h-full transform scale-y-[0.3]" style={{ opacity: Math.random() }} />
+            <div key={i} className="w-4 bg-white rounded-full h-full transform scale-y-[0.3]" style={{ opacity: (i % 5) * 0.1 + 0.05 }} />
           ))}
         </div>
 
