@@ -1,391 +1,487 @@
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Search, PhoneIncoming, AlertCircle, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
-import prisma from "@/lib/db";
-import { startOfDay, subDays } from "date-fns";
+'use client';
 
-export default async function Dashboard() {
-  const today = startOfDay(new Date());
-  const yesterday = subDays(today, 1);
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Play, Activity, Mic, Bot, BarChart3, ArrowRight, CheckCircle2, PhoneIncoming, AlertTriangle, User, Building2, Mail, Lock, Eye, EyeOff, X } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-  let dbUsers: any[] = [];
-  let todayCalls: any[] = [];
-  let yesterdayCalls: any[] = [];
-  let redZoneCalls: any[] = [];
-  let latestDbCalls: any[] = [];
+// Helper component for floating UI (No people faces, just UI representations)
+const FloatingAudioWave = ({ delay = 0, yOffset = 0 }: { delay?: number, yOffset?: number }) => (
+  <motion.div
+    initial={{ opacity: 0, y: yOffset + 30 }}
+    animate={{ opacity: 1, y: yOffset }}
+    transition={{ duration: 0.8, delay, ease: "easeOut" }}
+    className="flex items-end gap-1.5 p-4 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl"
+  >
+    {[40, 60, 30, 80, 50, 90, 40, 70].map((h, i) => (
+      <motion.div
+        key={i}
+        animate={{ height: [`${h}%`, `${h * 0.5}%`, `${h}%`] }}
+        transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1, ease: "easeInOut" }}
+        className="w-2 bg-[#00a6fb] rounded-full"
+        style={{ height: `${h}%` }}
+      />
+    ))}
+  </motion.div>
+);
 
-  try {
-    // BARISHA FOYDALANUVCHILAR (LEADERBOARD UCHUN)
-    dbUsers = await prisma.user.findMany({
-      where: { role: 'AGENT' },
-      include: {
-        calls: {
-          include: { analysis: true }
-        }
+export default function LandingChorusStyle() {
+  const router = useRouter();
+  const [showModal, setShowModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  // Close modal when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showModal && modalRef.current && !modalRef.current.contains(e.target as Node) && btnRef.current && !btnRef.current.contains(e.target as Node)) {
+        setShowModal(false);
       }
-    });
-
-    // QO'NG'IROQLAR HISTORISI
-    todayCalls = await prisma.callRecord.findMany({
-      where: { createdAt: { gte: today } },
-      include: { analysis: true }
-    });
-
-    yesterdayCalls = await prisma.callRecord.findMany({
-      where: { createdAt: { gte: yesterday, lt: today } },
-      include: { analysis: true }
-    });
-
-    // DIAGNOZ (QIZIL ZONA)
-    redZoneCalls = await prisma.aiAnalysis.findMany({
-      where: { score: { lte: 3 } },
-      orderBy: { createdAt: 'desc' },
-      take: 3,
-      include: { call: { include: { user: true } } }
-    });
-
-    // SO'NGGI QO'NG'IROQLAR
-    latestDbCalls = await prisma.callRecord.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      include: { user: true, analysis: true }
-    });
-  } catch (error) {
-    console.error("Databasega ulanishda xato yoki jadvallar topilmadi. Mock Data ishga tushadi.", error);
-  }
-
-  // Reytingni hisoblash
-  const leaderboard = dbUsers.map(user => {
-    const scoredCalls = user.calls.filter((c: any) => c.analysis !== null);
-    const totalScore = scoredCalls.reduce((sum: number, c: any) => sum + (c.analysis?.score || 0), 0);
-    const avgScore = scoredCalls.length > 0 ? totalScore / scoredCalls.length : 0;
-    
-    // Ism-sharif initials, ex: "Aliev J." -> "AJ"
-    const words = user.name.split(' ');
-    const initial = words.length > 1 ? `${words[0][0]}${words[1][0]}` : user.name.substring(0, 2);
-    
-    // Tasodifiy rang tanlash
-    const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-orange-500", "bg-cyan-500"];
-    const randColor = colors[user.id.charCodeAt(0) % colors.length];
-
-    return {
-      name: user.name,
-      sales: user.calls.length, 
-      score: Number(avgScore.toFixed(1)),
-      initial: initial.toUpperCase(),
-      color: randColor,
     };
-  }).sort((a, b) => b.score - a.score || b.sales - a.sales).slice(0, 5);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showModal]);
 
-  const getAvg = (calls: any[]) => {
-    const scored = calls.filter(c => c.analysis !== null);
-    if (!scored.length) return 0;
-    return scored.reduce((sum, c) => sum + c.analysis.score, 0) / scored.length;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsSuccess(true);
+      setTimeout(() => {
+        setShowModal(false);
+        router.push('/dashboard');
+      }, 2000);
+    }, 1500);
   };
 
-  const todayAvg = getAvg(todayCalls);
-  const yesterdayAvg = getAvg(yesterdayCalls);
-  const diffAvg = todayAvg - yesterdayAvg;
-
-  // Foiz hisobi
-  const scoredToday = todayCalls.filter(c => c.analysis !== null);
-  const totalScored = scoredToday.length || 1; // 0 ga bo'linishni oldini olish
-  
-  const fiveStars = scoredToday.filter(c => c.analysis.score === 5).length;
-  const fourStars = scoredToday.filter(c => c.analysis.score === 4).length;
-  const lowStars = scoredToday.filter(c => c.analysis.score <= 3).length;
-
-  const pct5 = Math.round((fiveStars / totalScored) * 100);
-  const pct4 = Math.round((fourStars / totalScored) * 100);
-  const pctLow = Math.round((lowStars / totalScored) * 100);
-
-  const redZoneList = redZoneCalls.map(analysis => {
-    // Sababi uzun bo'lsa qisqartirish
-    const summary = analysis.summary || "Nomalum xato";
-    const reason = summary.length > 25 ? summary.substring(0, 25) + "..." : summary;
-    
-    return {
-      name: analysis.call.user.name,
-      id: `#${analysis.call.id.slice(-4).toUpperCase()}`,
-      reason,
-      score: analysis.score
-    };
-  });
-
-  const latestList = latestDbCalls.map(c => {
-    let statusText = "Tahlil...";
-    let statusColor = "text-yellow-400 bg-yellow-500/10 border-yellow-500/20";
-    
-    if (c.status === "COMPLETED" && c.analysis) {
-        statusText = c.analysis.score.toFixed(1);
-        if (c.analysis.score >= 4.5) statusColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
-        else if (c.analysis.score >= 4) statusColor = "text-cyan-400 bg-cyan-500/10 border-cyan-500/20";
-        else statusColor = "text-rose-400 bg-rose-500/10 border-rose-500/20";
-    }
-
-    // Convert +998901234567 to +998 90 *** 45 67 mapping mask
-    let clientPhone = c.customerPhone;
-    if (clientPhone.length >= 12) {
-       clientPhone = `${clientPhone.slice(0, 4)} ${clientPhone.slice(4, 6)} *** ${clientPhone.slice(-4, -2)} ${clientPhone.slice(-2)}`;
-    }
-
-    return {
-      time: new Date(c.createdAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
-      agent: c.user.name,
-      client: clientPhone,
-      status: statusText,
-      statusColor: statusColor
-    };
-  });
-
-  // DAStlabki MOCK DATA (agar DB bo'sh bo'lsa premium ko'rinishni saqlab turish uchun)
-  // Haqiqiy ma'lumotlar tushganda o'z o'zidan o'chib ketadi
-  const showsPlaceholder = todayCalls.length === 0 && dbUsers.length === 0;
-  
-  const displayScore = showsPlaceholder ? 4.2 : Number(todayAvg.toFixed(1));
-  const displayDiff = showsPlaceholder ? 0.4 : Number(diffAvg.toFixed(1));
-  const displayPct5 = showsPlaceholder ? 45 : pct5;
-  const displayPct4 = showsPlaceholder ? 30 : pct4;
-  const displayPctLow = showsPlaceholder ? 25 : pctLow;
-  
-  const displayRedZone = showsPlaceholder ? [
-    { name: "Aliev J.", id: "#1142", reason: "Mijoz asabiylashdi", score: 1 },
-    { name: "Sattorov B.", id: "#1138", reason: "Qo'pollik", score: 1 },
-    { name: "Karimov N.", id: "#1099", reason: "Skript buzilgan", score: 2 },
-  ] : redZoneList;
-
-  const displayLeaderboard = showsPlaceholder ? [
-    { name: "Rustamov S.", sales: 45, score: 4.8, initial: "RS", color: "bg-blue-500" },
-    { name: "Qodirova M.", sales: 38, score: 4.6, initial: "QM", color: "bg-purple-500" },
-    { name: "Jo'rayev A.", sales: 32, score: 4.5, initial: "JA", color: "bg-emerald-500" },
-    { name: "Olimov D.", sales: 28, score: 4.2, initial: "OD", color: "bg-orange-500" },
-    { name: "Toshmatov N.", sales: 21, score: 4.0, initial: "TN", color: "bg-cyan-500" },
-  ] : leaderboard;
-
-  const displayLatest = showsPlaceholder ? [
-    { time: "12:45", agent: "Rustamov S.", client: "+998 90 *** 45 67", status: "5.0", statusColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-    { time: "12:30", agent: "Qodirova M.", client: "+998 90 *** 12 34", status: "4.2", statusColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" },
-    { time: "12:15", agent: "Aliev J.", client: "+998 93 *** 88 99", status: "1.0", statusColor: "text-rose-400 bg-rose-500/10 border-rose-500/20" },
-    { time: "11:50", agent: "Jo'rayev A.", client: "+998 97 *** 55 11", status: "Tahlil...", statusColor: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" },
-    { time: "11:42", agent: "Sattorov B.", client: "+998 99 *** 22 33", status: "2.0", statusColor: "text-rose-400 bg-rose-500/10 border-rose-500/20" },
-  ] : latestList;
-
-  const dashOffset = 97.38 * (1 - (displayScore / 5.0));
-
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Top Header / Navigation */}
-      <header className="sticky top-4 z-50 flex items-center justify-between px-6 py-4 rounded-2xl backdrop-blur-md bg-black/40 border border-white/10 shadow-2xl">
-        <div className="flex items-center gap-3">
-          <div className="size-8 rounded-full bg-blue-600 flex items-center justify-center">
-            <PhoneIncoming className="size-4 text-white" />
-          </div>
-          <h1 className="text-xl font-bold font-space-grotesk tracking-tight">
-            AI SALES PILOT
-          </h1>
-        </div>
-        <div className="hidden md:flex items-center bg-white/5 border border-white/10 rounded-full px-4 py-2 w-96">
-          <Search className="size-4 text-white/50 mr-2" />
-          <input
-            type="text"
-            placeholder="Mijoz ismi yoki qo&apos;ng&apos;iroq ID..."
-            className="bg-transparent border-none outline-none text-sm text-white/90 w-full placeholder:text-white/40"
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium leading-none">Rustamov S.</p>
-            <p className="text-xs text-white/50">Sotuv Rahbari (ROP)</p>
-          </div>
-          <div className="size-10 rounded-full bg-zinc-800 border-2 border-white/10 overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-white font-sans text-slate-800 selection:bg-rose-500/20">
 
-      {/* Main Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* FIXED NAVBAR */}
+      <nav className="fixed top-0 w-full z-50 bg-[#0a1628]/95 backdrop-blur-md border-b border-white/10">
+        <div className="max-w-[1300px] mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600">
+              <PhoneIncoming className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white">AI SALES PILOT</span>
+          </div>
+          <div className="hidden md:flex items-center gap-8">
+            <Link href="#features" className="text-[15px] font-medium text-white/80 hover:text-white transition-colors">Xususiyatlar</Link>
+            <Link href="#solutions" className="text-[15px] font-medium text-white/80 hover:text-white transition-colors">Yechimlar</Link>
+          </div>
+          <div className="flex items-center gap-5">
+            <Link href="#footer" className="text-[15px] font-medium text-white/90 hover:text-white transition-colors hidden sm:block">
+              Kontakt
+            </Link>
+            <div className="relative">
+              <button
+                ref={btnRef}
+                onClick={() => { setShowModal(!showModal); setIsSuccess(false); }}
+                className="bg-[#e02b20] hover:bg-[#d02015] text-white font-semibold text-[15px] px-6 py-2.5 rounded-lg transition-colors border border-[#e02b20]/20"
+              >
+                Bepul boshlash
+              </button>
 
-        {/* Premium Dashboard: Reimagined Circular Gauge Overview */}
-        <div className="md:col-span-2 bg-gradient-to-br from-[#18181b] to-[#121214] border border-white/5 rounded-2xl shadow-[0_0_40px_-15px_rgba(52,211,153,0.1)] relative overflow-hidden group p-6">
-          {/* Subtle background glow */}
-          <div className="absolute top-0 right-0 -mt-16 -mr-16 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" />
-          
-          <div className="flex flex-col h-full justify-between relative z-10">
-            <h3 className="text-white/50 text-xs font-semibold tracking-[0.2em] uppercase mb-8 flex items-center gap-2">
-              <Activity className="w-3.5 h-3.5" />
-              Bo&apos;limning Bugungi O&apos;rtacha Bali {showsPlaceholder && "(Demo Data)"}
+              {/* MODAL DROPDOWN FORM */}
+              <AnimatePresence>
+                {showModal && (
+                  <motion.div
+                    ref={modalRef}
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    className="absolute right-0 top-[calc(100%+12px)] w-[380px] bg-[#0d1e38] border border-white/15 rounded-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden z-[100]"
+                  >
+                    {/* Arrow pointer */}
+                    <div className="absolute -top-2 right-8 w-4 h-4 bg-[#0d1e38] border-l border-t border-white/15 transform rotate-45" />
+
+                    {!isSuccess ? (
+                      <div className="p-6 relative z-10">
+                        <div className="flex items-center justify-between mb-5">
+                          <h3 className="text-white font-bold text-lg">Ro'yxatdan o'tish</h3>
+                          <button onClick={() => setShowModal(false)} className="text-white/40 hover:text-white transition-colors">
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-3">
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                              <User className="h-4 w-4 text-white/30" />
+                            </div>
+                            <input type="text" required placeholder="F.I.SH (Ism va familiya)" className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" />
+                          </div>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                              <Building2 className="h-4 w-4 text-white/30" />
+                            </div>
+                            <input type="text" required placeholder="Kompaniya nomi" className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" />
+                          </div>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                              <Mail className="h-4 w-4 text-white/30" />
+                            </div>
+                            <input type="email" required placeholder="Elektron pochta" className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" />
+                          </div>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                              <Lock className="h-4 w-4 text-white/30" />
+                            </div>
+                            <input type={showPassword ? 'text' : 'password'} required placeholder="Maxfiy parol" className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" />
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-white/30 hover:text-white/60 transition-colors">
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                          <button disabled={isSubmitting} className="w-full h-12 bg-[#e02b20] hover:bg-[#c9241b] text-white rounded-xl font-semibold text-[15px] flex items-center justify-center gap-2 mt-2 transition-colors disabled:opacity-60">
+                            {isSubmitting ? (
+                              <span className="flex items-center gap-2">
+                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                Bajarilmoqda...
+                              </span>
+                            ) : (
+                              'Ro\'yxatdan o\'tish'
+                            )}
+                          </button>
+                        </form>
+                        <p className="text-center text-white/30 text-xs mt-4">Allaqachon hisobingiz bormi? <Link href="/login" className="text-[#00a6fb] hover:underline">Kirish</Link></p>
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center">
+                        <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <CheckCircle2 className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-white font-bold text-lg mb-1">Muvaffaqiyatli!</h3>
+                        <p className="text-white/50 text-sm">Dashboard ga kiryapsiz...</p>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* HERO SECTION - Deep Navy Gradient */}
+      <section className="relative pt-36 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden bg-gradient-to-b from-[#0a1628] to-[#12284c] border-b-4 border-[#00a6fb]">
+        {/* Subtle background audio waves */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none flex items-center justify-center gap-4">
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div key={i} className="w-4 bg-white rounded-full h-full transform scale-y-[0.3]" style={{ opacity: Math.random() }} />
+          ))}
+        </div>
+
+        <div className="max-w-[1300px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
+
+          <div className="lg:col-span-7">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-5xl sm:text-7xl font-light text-white tracking-tight mb-8 leading-[1.15]"
+            >
+              Sotuvdagi har bir daqiqani <br className="hidden md:block" /> foydaga aylantiring
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-lg sm:text-xl text-[#b4c5dc] mb-10 max-w-2xl font-normal leading-relaxed"
+            >
+              Markaziy Osiyodagi eng ilg'or suhbat tahlili tizimi. Sun'iy intellekt xodimlaringizning mijozlar bilan muloqotini 100% eshitib, xatolarni ko'rsatish va savdoni oshirish uchun yaratilgan.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="flex flex-col sm:flex-row gap-4"
+            >
+              <button onClick={() => { setShowModal(true); setIsSuccess(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="h-14 px-8 rounded-lg bg-[#e02b20] text-white font-semibold text-[17px] hover:bg-[#c9241b] transition-colors flex items-center justify-center">
+                Demo versiyani sinash
+              </button>
+              <Link href="/login" className="h-14 px-8 rounded-lg border border-white/30 text-white font-medium text-[17px] hover:bg-white/5 transition-colors flex items-center justify-center">
+                Batafsil ma'lumot
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Right Side Glow Effect */}
+          <div className="hidden lg:flex lg:col-span-5 relative h-[400px] items-center justify-center">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#00a6fb]/15 rounded-full blur-[120px] pointer-events-none" />
+          </div>
+
+        </div>
+      </section>
+
+      {/* MID TRANSITION SECTION */}
+      <section className="py-24 px-6 bg-[#f4f7f9] text-center border-b border-slate-200">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl sm:text-5xl lg:text-5xl font-light text-[#0a1628] leading-[1.3] tracking-tight">
+            Sotuv bo'limida endi sirli xatolar qolmaydi. Barcha jarayon shaffof, avtomatik va o'lchanadigan vizual hisobotlarda.
+          </h2>
+        </div>
+      </section>
+
+      {/* FEATURE 1: Audio Transcription */}
+      <section id="features" className="py-28 px-6 max-w-[1300px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          {/* Left Content */}
+          <div className="order-2 lg:order-1">
+            <p className="text-xs font-bold text-[#0066cc] uppercase tracking-[0.2em] mb-4">AUDIO MATN TAHLILI</p>
+            <h3 className="text-4xl sm:text-5xl font-medium text-[#0a1628] block mb-6 leading-[1.15]">
+              Suhbatlarni birzumda yozib olish va matnga aylantirish
             </h3>
-            
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8 h-full">
-              {/* Left: Circular Score */}
-              <div className="flex items-center gap-6">
-                <div className="relative w-36 h-36">
-                  {/* SVG Circular Progress */}
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="18" cy="18" r="15.5" fill="none" className="stroke-white/5" strokeWidth="2.5" />
-                    {/* Dynamic offset based on score */}
-                    <circle 
-                      cx="18" cy="18" r="15.5" fill="none" 
-                      className="stroke-emerald-400 transition-all duration-1000 ease-out" 
-                      strokeWidth="2.5" strokeDasharray="97.38" strokeDashoffset={dashOffset} strokeLinecap="round" />
-                  </svg>
-                  {/* Inner Text */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-4xl font-bold text-white tracking-tight font-sans">
-                      {Math.floor(displayScore)}<span className="text-xl text-white/50 px-0.5">.</span>{Math.round((displayScore % 1) * 10)}
-                    </span>
-                    <span className="text-[10px] text-emerald-400/80 font-medium uppercase tracking-widest mt-1">/ 5.0</span>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col gap-2">
-                  <Badge variant="outline" className={`px-3 py-1 font-normal w-fit ${displayDiff >= 0 ? "border-emerald-500/20 text-emerald-400 bg-emerald-500/5" : "border-rose-500/20 text-rose-400 bg-rose-500/5"}`}>
-                    {displayDiff >= 0 ? <ArrowUpRight className="w-3.5 h-3.5 mr-1" /> : <ArrowDownRight className="w-3.5 h-3.5 mr-1" />}
-                    {displayDiff > 0 ? "+" : ""}{displayDiff} O&apos;sish
-                  </Badge>
-                  <p className="text-xs text-white/40 max-w-[120px] leading-relaxed">
-                    Kechagiga nisbatan {displayDiff >= 0 ? "ijobiy" : "salbiy"} dinamika {displayDiff >= 0 ? "saqlanib qolmoqda." : "kuzatilmoqda."}
-                  </p>
-                </div>
-              </div>
+            <p className="text-[17px] text-slate-500 mb-8 leading-relaxed max-w-lg">
+              Sotuvchilar Mijozga qo'ng'iroq qilganda (telefon yoki dastur orqali), sun'iy intellekt darhol aralashib, suhbatni eshitadi va o'zbek tilida hech bir iborani yo'qotmay to'liq matnli xatga (transcription) aylantiradi.
+            </p>
+            <Link href="/register" className="inline-flex items-center justify-center px-8 py-3.5 bg-[#e02b20] text-white rounded-lg font-semibold hover:bg-[#c9241b] transition-colors shadow-md">
+              Tizim ko'rinishida sinash
+            </Link>
+          </div>
 
-              {/* Right: Breakdown Bars */}
-              <div className="w-full md:w-64 space-y-4">
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs items-center">
-                    <span className="text-white/60 font-medium tracking-wide">5 BALL</span>
-                    <span className="font-bold text-emerald-400">{displayPct5}%</span>
-                  </div>
-                  <Progress value={displayPct5} className="h-1.5 bg-white/5 [&>div]:bg-emerald-400" />
+          {/* Right Abstract UI */}
+          <div className="order-1 lg:order-2 bg-[#f8f9fb] rounded-[32px] p-8 sm:p-12 relative overflow-hidden h-[450px] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)] flex items-center justify-center">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full" />
+
+            {/* Mockup Chat UI */}
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] border border-slate-100 overflow-hidden relative z-10 flex flex-col h-[320px]">
+              <div className="bg-slate-50 px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex gap-2 items-center">
+                  <Mic className="w-4 h-4 text-emerald-500" />
+                  <span className="text-sm font-semibold text-slate-700">Live Transkripsiya</span>
                 </div>
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs items-center">
-                    <span className="text-white/60 font-medium tracking-wide">4 BALL</span>
-                    <span className="font-bold text-cyan-400">{displayPct4}%</span>
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+              <div className="p-5 flex-1 overflow-hidden flex flex-col gap-4">
+                <div className="flex flex-col items-start w-3/4">
+                  <span className="text-[10px] text-slate-400 font-bold mb-1 ml-1 uppercase">XoDIM</span>
+                  <div className="bg-blue-50 text-slate-700 text-sm px-4 py-3 rounded-2xl rounded-tl-sm border border-blue-100">
+                    Assalomu alaykum, kecha mahsulotni ko'rib chiqdingizmi?
                   </div>
-                  <Progress value={displayPct4} className="h-1.5 bg-white/5 [&>div]:bg-cyan-400" />
                 </div>
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs items-center">
-                    <span className="text-white/60 font-medium tracking-wide">1-3 BALL</span>
-                    <span className="font-bold text-rose-500">{displayPctLow}%</span>
+                <div className="flex flex-col items-end self-end w-3/4">
+                  <span className="text-[10px] text-slate-400 font-bold mb-1 mr-1 uppercase">MIJOZ</span>
+                  <div className="bg-slate-100 text-slate-700 text-sm px-4 py-3 rounded-2xl rounded-tr-sm border border-slate-200">
+                    Ha, ko'rdim. Lekin biroz narxi qimmat ekan.
                   </div>
-                  <Progress value={displayPctLow} className="h-1.5 bg-white/5 [&>div]:bg-rose-500" />
+                </div>
+                <div className="flex flex-col items-start w-3/4 opacity-50">
+                  <span className="text-[10px] text-slate-400 font-bold mb-1 ml-1 uppercase">XoDIM</span>
+                  <div className="flex items-center gap-1.5 bg-blue-50 text-slate-700 text-sm px-4 py-3 rounded-2xl rounded-tl-sm border border-blue-100">
+                    <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" />
+                    <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                    <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Critical Alerts Zone */}
-        <Card className="bg-[#18181b] border-rose-500/30 shadow-xl shadow-rose-500/5 hover:border-rose-500/50 transition-colors">
-          <CardHeader className="pb-3 border-b border-white/5">
-            <CardTitle className="text-rose-500 flex items-center gap-2 text-sm font-semibold tracking-wide">
-              <AlertCircle className="size-4" />
-              DIQQAT! (QIZIL ZONA)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4 space-y-4">
-            {displayRedZone.length > 0 ? displayRedZone.map((err, i) => (
-              <div key={i} className="flex items-start justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 group">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm">{err.name}</span>
-                    <span className="text-xs text-white/40">{err.id}</span>
-                  </div>
-                  <p className="text-xs text-rose-400 mt-1" title={err.reason}>{err.reason}</p>
-                </div>
-                <div className="size-7 rounded-sm bg-rose-500/20 text-rose-500 flex items-center justify-center font-bold text-xs border border-rose-500/20 group-hover:bg-rose-500 group-hover:text-white transition-colors">
-                  {err.score}
-                </div>
-              </div>
-            )) : (
-              <div className="text-center text-white/40 text-sm py-8">
-                Qizil zonaga tushgan qo&apos;ng&apos;iroqlar topilmadi.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* FEATURE 2: AI Evaluation */}
+      <section className="py-28 px-6 bg-[#f4f7f9] border-y border-slate-200">
+        <div className="max-w-[1300px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
 
-      {/* Leaderboard and Latest Calls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* Top Reyting (Leaderboard) */}
-        <Card className="bg-[#18181b] border-white/5 shadow-xl">
-          <CardHeader className="pb-3 border-b border-white/5">
-            <CardTitle className="text-white/90 text-sm font-semibold tracking-wide flex items-center justify-between">
-              <span>Top Reyting (Leaderboard)</span>
-              <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-400 font-normal hover:bg-emerald-500/20">Ajoyib natija</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 p-0">
-            <div className="flex flex-col">
-              {displayLeaderboard.length > 0 ? displayLeaderboard.map((user, i) => (
-                <div key={i} className="flex items-center justify-between p-4 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+          {/* Left Abstract UI */}
+          <div className="bg-white rounded-[32px] p-8 sm:p-12 relative overflow-hidden h-[450px] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.05)] border border-slate-100 flex items-center justify-center">
+            <div className="w-full max-w-sm">
+              <h4 className="font-semibold text-slate-800 mb-6 flex items-center gap-2">
+                <Bot className="w-5 h-5 text-rose-500" />
+                AI Tahlil va xulosasi
+              </h4>
+
+              <div className="space-y-4">
+                {/* Rule 1 passing */}
+                <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <div className="text-white/30 font-bold w-4 text-xs">{i + 1}</div>
-                    <div className={`size-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${user.color}`}>
-                      {user.initial}
+                    <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white">
+                      <CheckCircle2 className="w-4 h-4" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-white/90">{user.name}</p>
-                      <p className="text-xs text-white/50">{user.sales} ta suhbat</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center justify-end gap-1 text-emerald-400 font-bold text-sm">
-                      {user.score.toFixed(1)}
-                    </div>
-                    <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5">O&apos;rtacha ball</p>
+                    <span className="text-sm font-medium text-slate-700">Salomlashish skripti uqildi</span>
                   </div>
                 </div>
-              )) : (
-                <div className="text-center text-white/40 text-sm py-8 border-b border-white/5">
-                  Xodimlar yetarli emas.
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* So'nggi Qo'ng'iroqlar */}
-        <Card className="bg-[#18181b] border-white/5 shadow-xl">
-          <CardHeader className="pb-3 border-b border-white/5 flex flex-row items-center justify-between">
-            <CardTitle className="text-white/90 text-sm font-semibold tracking-wide">
-              So&apos;nggi Qo&apos;ng&apos;iroqlar
-            </CardTitle>
-            <Link href="/calls" className="text-xs text-blue-400 hover:text-blue-300 transition-colors">Barchasini ko&apos;rish</Link>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="flex flex-col">
-               {displayLatest.length > 0 ? displayLatest.map((call, i) => (
-                <div key={i} className="flex items-center justify-between p-4 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors cursor-pointer group">
-                  <div className="flex items-center gap-4">
-                    <div className="text-xs text-white/40">{call.time}</div>
-                    <div>
-                      <p className="text-sm font-medium text-white/90">{call.agent}</p>
-                      <p className="text-xs text-white/40 font-mono tracking-wider">{call.client}</p>
-                    </div>
+                {/* Rule 2 failing heavily */}
+                <div className="flex gap-4 p-5 bg-rose-50 border border-rose-200 rounded-xl relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-rose-500" />
+                  <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <AlertTriangle className="w-4 h-4" />
                   </div>
-                  <Badge variant="outline" className={`font-medium ${call.statusColor}`}>
-                    {call.status}
-                  </Badge>
+                  <div>
+                    <span className="text-sm font-bold text-slate-800 block mb-1">E'tiroz noto'g'ri hal qilindi</span>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Mijoz "Qimmat" deb e'tiroz bildirganda, Sotuvchi tushuntirish berish o'rniga gapni qisqa qildi. "Bo'lmasa chala ish bo'ladi" iborasi ishlatildi. Reyting pastlatildi.
+                    </p>
+                  </div>
                 </div>
-              )) : (
-                 <div className="text-center text-white/40 text-sm py-8 border-b border-white/5">
-                  Qo&apos;ng&apos;iroqlar topilmadi.
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
+                {/* Progress meter total */}
+                <div className="pt-4 border-t border-slate-100">
+                  <div className="flex justify-between text-xs font-bold mb-2">
+                    <span className="text-slate-500 uppercase">Jami Skript bajarilishi</span>
+                    <span className="text-rose-500">42% (Qoniqarsiz)</span>
+                  </div>
+                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-rose-500 w-[42%] rounded-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Content */}
+          <div>
+            <p className="text-xs font-bold text-[#0066cc] uppercase tracking-[0.2em] mb-4">SUN'IY INTELLEKT TAHLILI</p>
+            <h3 className="text-4xl sm:text-5xl font-medium text-[#0a1628] block mb-6 leading-[1.15]">
+              Nima uchun muvaffaqiyatsiz savdo qildik? Qidirib toping
+            </h3>
+            <p className="text-[17px] text-slate-500 mb-8 leading-relaxed max-w-lg">
+              Bizning asab tahlili algoritmlarimiz har bir chaqiruvni 50 dan ortiq parametrda skanerlaydi. Sotuvchi e'tirozlarni qanday yopdi? Mijoz ishonchini oldimi yoki agressiv suhbat olib bordimi? Tizim sizga tayyor diagnosni qo'yadi.
+            </p>
+            <Link href="/register" className="inline-flex items-center text-[#e02b20] font-semibold text-[17px] hover:text-[#c9241b] transition-colors group">
+              Batafsil ma'lumot olish <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURE 3: ROP Dashboard */}
+      <section className="py-28 px-6 max-w-[1300px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          {/* Left Content */}
+          <div className="order-2 lg:order-1">
+            <p className="text-xs font-bold text-[#0066cc] uppercase tracking-[0.2em] mb-4">RAHBARLAR XONASI (DASHBOARD)</p>
+            <h3 className="text-4xl sm:text-5xl font-medium text-[#0a1628] block mb-6 leading-[1.15]">
+              Sotuv jamoaning barcha ko'rsatkichlari sizning kaftingizda
+            </h3>
+            <p className="text-[17px] text-slate-500 mb-8 leading-relaxed max-w-lg">
+              Sotuv rahbari (ROP) yoki biznes egasi sifatida siz doimo band bo'lasiz. Biz qiyin tahlillarni bitta vizual ekranda va diagrammalarda ko'rsatamiz. Kunning eng zo'r ishlaganlari va qizil zonadagi(muammoli) qo'ng'iroqlarni 1 daqiqada kuzating.
+            </p>
+            <Link href="/register" className="inline-flex items-center justify-center px-8 py-3.5 bg-[#e02b20] text-white rounded-lg font-semibold hover:bg-[#c9241b] transition-colors shadow-md">
+              Boshlash
+            </Link>
+          </div>
+
+          {/* Right Abstract UI */}
+          <div className="order-1 lg:order-2 bg-[#f8f9fb] rounded-[32px] p-6 sm:p-10 relative overflow-hidden h-[450px] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)] flex flex-col justify-center">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full" />
+
+            {/* Mockup Dashboard Cards */}
+            <div className="w-full space-y-4 relative z-10 z-10 scale-[0.95] origin-center -ml-4">
+              {/* Card 1 */}
+              <div className="bg-white rounded-2xl p-5 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.1)] border border-slate-100 flex items-center justify-between ml-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500">1</div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Qodirova Madina</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Top reyting: +38 suhbat</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-black text-emerald-500 block">4.9 / 5</span>
+                  <span className="text-[10px] uppercase text-emerald-500/70 font-bold">O'rtacha</span>
+                </div>
+              </div>
+
+              {/* Card 2 */}
+              <div className="bg-white rounded-2xl p-5 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.1)] border border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500">2</div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Rustamov S.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Muammosiz sotuv jarayoni</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-black text-emerald-500 block">4.7 / 5</span>
+                  <span className="text-[10px] uppercase text-emerald-500/70 font-bold">O'rtacha</span>
+                </div>
+              </div>
+
+              {/* Red Zone Mockup */}
+              <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 shadow-[0_10px_30px_-15px_rgba(225,29,72,0.1)] flex items-center justify-between ml-12">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center font-bold text-rose-500">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Asqarov T.</p>
+                    <p className="text-xs text-rose-500 font-medium mt-0.5">Juda ko'p skript buzilmoqda</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-black text-rose-500 block">2.1 / 5</span>
+                  <span className="text-[10px] uppercase text-rose-500/70 font-bold">Qizil Zona</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA SECTION */}
+      <section className="bg-gradient-to-b from-[#0a1628] to-[#12284c] border-t border-[#1a3a6e] py-32 px-6 text-center text-white relative overflow-hidden border-b-[8px] border-[#e02b20]">
+        <div className="max-w-4xl mx-auto relative z-10">
+          <h2 className="text-5xl md:text-6xl font-light tracking-tight mb-8">O'z savdolaringiz egasiga aylaning</h2>
+          <p className="text-[#b4c5dc] text-xl mb-12 font-normal max-w-2xl mx-auto">
+            10, 50 yoki hatto 100 ta xodimingiz bo'lsa ham endi hammasini AI nazorat qiladi. Bugunoq Tizimga ulaning va AI mo'jizalarini ko'ring.
+          </p>
+          <button onClick={() => { setShowModal(true); setIsSuccess(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="inline-flex items-center justify-center h-16 px-10 bg-[#e02b20] hover:bg-[#c9241b] text-white font-bold text-lg rounded-xl transition-all border border-[#e02b20]/20 w-full sm:w-auto">
+            Sinov muddatini boshlash
+          </button>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer id="footer" className="bg-[#050B14] py-16 px-6 text-[#7a8a9e] border-t border-white/5">
+        <div className="max-w-[1300px] mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500 flex items-center justify-center">
+                <PhoneIncoming className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span className="font-bold text-lg text-white tracking-wide block leading-none">AI SALES PILOT</span>
+                <span className="text-[13px] font-bold text-white/40 uppercase tracking-widest mt-1 block">Premium Solution</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center border-x border-white/5 py-2">
+              <div className="inline-flex flex-col">
+                <a href="tel:+998952645664" className="text-2xl font-black text-white hover:text-rose-500 transition-colors tracking-[0.02em]">
+                  +998 95 264 56 64
+                </a>
+                <div className="flex justify-between text-[13px] font-bold text-white/40 uppercase tracking-[0.05em] mt-0">
+                  <span>Andijon</span>
+                  <span>shahar,</span>
+                  <span>O'zbekiston</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end gap-4">
+              <div className="text-sm text-right">
+                © {new Date().getFullYear()} AI Sales Pilot.<br />Barcha huquqlar himoyalangan.
+              </div>
+              <div className="flex gap-4 text-xs uppercase tracking-widest font-bold">
+                <a href="#" className="text-white/40 hover:text-white transition-colors">Yordam</a>
+                <a href="#" className="text-white/40 hover:text-white transition-colors">Maxfiylik</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
