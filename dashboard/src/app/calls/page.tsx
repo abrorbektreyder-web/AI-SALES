@@ -64,10 +64,66 @@ export default function CallsHistory() {
   const [searchQuery, setSearchQuery] = useState("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedCall, setSelectedCall] = useState<any>(null);
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [realCalls, setRealCalls] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCalls() {
+      try {
+        const res = await fetch("/api/calls");
+        if (!res.ok) throw new Error("API xatosi");
+        
+        const data = await res.json();
+        
+        if (data && data.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const mappedCalls = data.map((c: any) => {
+             let clientPhone = c.customerPhone || "";
+             if (clientPhone.length >= 12) {
+               clientPhone = `${clientPhone.slice(0, 4)} ${clientPhone.slice(4, 6)} *** ${clientPhone.slice(-4, -2)} ${clientPhone.slice(-2)}`;
+             }
+             
+             let score = 0;
+             let summary = "Hali tahlil qilinmadi";
+             let color = "text-yellow-400 bg-yellow-500/10 border-yellow-500/20";
+             
+             if (c.analysis) {
+               score = c.analysis.score;
+               summary = c.analysis.summary || "";
+               if (score >= 4.5) color = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+               else if (score >= 4) color = "text-cyan-400 bg-cyan-500/10 border-cyan-500/20";
+               else color = "text-rose-400 bg-rose-500/10 border-rose-500/20";
+             }
+             
+             return {
+               id: c.id,
+               agent: c.user?.name || "Noma'lum xodim",
+               client: clientPhone,
+               date: new Date(c.createdAt),
+               duration: `${Math.floor(c.durationSec / 60)}:${(c.durationSec % 60).toString().padStart(2, '0')}`,
+               score: score,
+               statusColor: color,
+               audioUrl: c.audioUrl || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+               aiSummary: summary
+             };
+          });
+          setRealCalls(mappedCalls);
+        }
+      } catch (err) {
+        console.error("Qo'ng'iroqlarni yuklashda xato, Mock dataga o'tilmoqda:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchCalls();
+  }, []);
 
   // Filter with useMemo
   const filteredCalls = useMemo(() => {
-    let result = mockCalls;
+    let result = realCalls.length > 0 ? realCalls : mockCalls;
     if (date) {
       result = result.filter(call => isSameDay(call.date, date));
     }
@@ -78,7 +134,7 @@ export default function CallsHistory() {
       );
     }
     return result;
-  }, [date, searchQuery]);
+  }, [date, searchQuery, realCalls]);
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
