@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Noto'g'ri ma'lumot jo'natildi", details: error.errors },
+        { error: "Noto'g'ri ma'lumot jo'natildi", details: (error as z.ZodError).issues },
         { status: 400 }
       );
     }
