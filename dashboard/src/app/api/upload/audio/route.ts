@@ -1,0 +1,109 @@
+import { NextRequest, NextResponse } from "next/server";
+import { verifyToken } from "@/lib/auth";
+import prisma from "@/lib/db";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
+
+// POST /api/upload/audio — Audio faylni yuklash
+export async function POST(req: NextRequest) {
+  try {
+    // Token tekshirish
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { error: "Avtorizatsiya talab qilinadi" },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split(" ")[1];
+    const payload = verifyToken(token);
+    if (!payload) {
+      return NextResponse.json(
+        { error: "Token yaroqsiz" },
+        { status: 401 }
+      );
+    }
+
+    const formData = await req.formData();
+    const file = formData.get("audio") as File;
+    const customerPhone = formData.get("customerPhone") as string;
+    const durationSec = parseInt(formData.get("durationSec") as string) || 0;
+
+    if (!file) {
+      return NextResponse.json(
+        { error: "Audio fayl yuborilmadi" },
+        { status: 400 }
+      );
+    }
+
+    if (!customerPhone) {
+      return NextResponse.json(
+        { error: "Mijoz telefon raqami kiritilmadi" },
+        { status: 400 }
+      );
+    }
+
+    // Fayl hajmini tekshirish (max 50MB)
+    const MAX_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json(
+        { error: "Fayl hajmi 50MB dan oshmasligi kerak" },
+        { status: 413 }
+      );
+    }
+
+    // Upload papkasini yaratish
+    const uploadsDir = path.join(process.cwd(), "public", "uploads", "audio");
+    await mkdir(uploadsDir, { recursive: true });
+
+    // Fayl nomini yaratish (uuid + vaqt)
+    const ext = file.name.split(".").pop() || "mp3";
+    const fileName = `${payload.userId}_${Date.now()}.${ext}`;
+    const filePath = path.join(uploadsDir, fileName);
+
+    // Faylni yozish
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    await writeFile(filePath, buffer);
+
+    // URL yaratish (local uchun)
+    // TODO: Production da S3 URL ga o'zgartiriladi
+    const audioUrl = `/uploads/audio/${fileName}`;
+
+    // Bazaga yozish
+    const callRecord = await prisma.callRecord.create({
+      data: {
+        userId: payload.userId,
+        customerPhone: customerPhone,
+        durationSec: durationSec,
+        audioUrl: audioUrl,
+        status: "ANALYZING",
+      },
+    });
+
+    // TODO: Bu yerda Python(FastAPI) AI serveriga signal yuboriladi
+    // fetch("http://ai-server/api/analyze", {
+    //   method: "POST",
+    //   body: JSON.stringify({ callId: callRecord.id, audioUrl })
+    // })
+
+    return NextResponse.json(
+      {
+        message: "Audio muvaffaqiyatli yuklandi",
+        callRecord: {
+          id: callRecord.id,
+          audioUrl: callRecord.audioUrl,
+          status: callRecord.status,
+        },
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Audio upload xatosi:", error);
+    return NextResponse.json(
+      { error: "Server ichki xatosi" },
+      { status: 500 }
+    );
+  }
+}

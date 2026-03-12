@@ -66,10 +66,10 @@ Loyiha jarayonida adashmaslik va oson nazorat qilish uchun har bir faza belgilab
 - [x] 1.3. Boshlang'ich proyekt strukturasi va server (VPS/Cloud) tayyorlash (CI/CD setup).
 
 ### 2-Faza: Mobil Ilova va Backend API (MVP - Call Recording)
-- [ ] 2.1. Sotuvchilar tizimga kirishi (Login/Auth) va shaxsiy kabinetini Backend'ga ulash.
+- [x] 2.1. Sotuvchilar tizimga kirishi (Login/Auth) va shaxsiy kabinetini Backend'ga ulash.
 - [ ] 2.2. Mobil ilova ichida SIP Mijozini (Softphone) o'rnatish.
-- [ ] 2.3. Qo'ng'iroq amalga oshishi va tugashi bilan `.mp3` yoki `.wav` fayl tarzida Backend'ga (S3 ga) yuborilishini sozlash.
-- [ ] 2.4. Dashboard'da ROP kelib tushgan yozuvlarni audiosi bilan eshita olishini ta'minlash (Oddiy Pleyer).
+- [x] 2.3. Qo'ng'iroq amalga oshishi va tugashi bilan `.mp3` yoki `.wav` fayl tarzida Backend'ga (S3 ga) yuborilishini sozlash.
+- [x] 2.4. Dashboard'da ROP kelib tushgan yozuvlarni audiosi bilan eshita olishini ta'minlash (Oddiy Pleyer).
 
 ### 3-Faza: AI Tahlil Tizimi (Engine Core)
 - [ ] 3.1. STT (Speech-to-Text) integratsiyasi: Audio faylni fonda qabul qilib, uni tekstga o'girib DB ga yozish.
