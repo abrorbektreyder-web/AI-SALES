@@ -72,9 +72,9 @@ Loyiha jarayonida adashmaslik va oson nazorat qilish uchun har bir faza belgilab
 - [x] 2.4. Dashboard'da ROP kelib tushgan yozuvlarni audiosi bilan eshita olishini ta'minlash (Oddiy Pleyer).
 
 ### 3-Faza: AI Tahlil Tizimi (Engine Core)
-- [ ] 3.1. STT (Speech-to-Text) integratsiyasi: Audio faylni fonda qabul qilib, uni tekstga o'girib DB ga yozish.
-- [ ] 3.2. LLM (AI Tahlilchi) Promtini yaratish: AI o'girilgan tekstni o'qib unga 1-5 gacha ball berish logikasini o'rgatish (Prompt Engineering).
-- [ ] 3.3. Xulosa (Summary) va bahoni tizim bazasiga kiritish va API orqali chiqarish.
+- [x] 3.1. STT (Speech-to-Text) integratsiyasi: Audio faylni fonda qabul qilib, uni tekstga o'girib DB ga yozish.
+- [x] 3.2. LLM (AI Tahlilchi) Promtini yaratish: AI o'girilgan tekstni o'qib unga 1-5 gacha ball berish logikasini o'rgatish (Prompt Engineering).
+- [x] 3.3. Xulosa (Summary) va bahoni tizim bazasiga kiritish va API orqali chiqarish.
 - [ ] 3.4. Darsliklar tavsiya qilish algoritmi: AI ko'rgan xatosiga mos Dars ID (URL) ni bazadan topib biriktirishi.
 
 ### 4-Faza: ROP Premium Dashboard

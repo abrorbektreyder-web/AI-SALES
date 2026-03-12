@@ -82,11 +82,20 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // TODO: Bu yerda Python(FastAPI) AI serveriga signal yuboriladi
-    // fetch("http://ai-server/api/analyze", {
-    //   method: "POST",
-    //   body: JSON.stringify({ callId: callRecord.id, audioUrl })
-    // })
+    // AI Engine (FastAPI) serveriga signal yuborish — fonda tahlil boshlash
+    const AI_ENGINE_URL = process.env.AI_ENGINE_URL || "http://localhost:8001";
+    try {
+      fetch(`${AI_ENGINE_URL}/api/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          callId: callRecord.id,
+          audioUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}${audioUrl}`
+        }),
+      }).catch(err => console.error("AI Engine ga signal yuborishda xato:", err));
+    } catch (e) {
+      console.error("AI Engine ulanishda xato:", e);
+    }
 
     return NextResponse.json(
       {
