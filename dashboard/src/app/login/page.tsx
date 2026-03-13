@@ -17,7 +17,7 @@ export default function LoginROP() {
     // Simulate Login call
     setTimeout(() => {
       setIsSubmitting(false);
-      router.push('/');
+      router.push('/dashboard');
     }, 1500);
   };
 

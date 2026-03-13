@@ -20,7 +20,7 @@ export default function AppleStyleLanding() {
       setIsSubmitting(false);
       setIsSuccess(true);
       setTimeout(() => {
-        router.push('/');
+        router.push('/dashboard');
       }, 2000);
     }, 1500);
   };
