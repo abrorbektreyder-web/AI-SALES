@@ -208,9 +208,9 @@ export default function LandingChorusStyle() {
               <button onClick={() => { setShowModal(true); setIsSuccess(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="h-14 px-8 rounded-lg bg-[#e02b20] text-white font-semibold text-[17px] hover:bg-[#c9241b] transition-colors flex items-center justify-center">
                 Demo versiyani sinash
               </button>
-              <Link href="/login" className="h-14 px-8 rounded-lg border border-white/30 text-white font-medium text-[17px] hover:bg-white/5 transition-colors flex items-center justify-center">
+              <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }} className="h-14 px-8 rounded-lg border border-white/30 text-white font-medium text-[17px] hover:bg-white/5 transition-colors flex items-center justify-center">
                 Batafsil ma'lumot
-              </Link>
+              </a>
             </motion.div>
           </div>
 
@@ -243,9 +243,9 @@ export default function LandingChorusStyle() {
             <p className="text-[17px] text-slate-500 mb-8 leading-relaxed max-w-lg">
               Sotuvchilar Mijozga qo'ng'iroq qilganda (telefon yoki dastur orqali), sun'iy intellekt darhol aralashib, suhbatni eshitadi va o'zbek tilida hech bir iborani yo'qotmay to'liq matnli xatga (transcription) aylantiradi.
             </p>
-            <Link href="/register" className="inline-flex items-center justify-center px-8 py-3.5 bg-[#e02b20] text-white rounded-lg font-semibold hover:bg-[#c9241b] transition-colors shadow-md">
+            <button onClick={() => { setShowModal(true); setIsSuccess(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="inline-flex items-center justify-center px-8 py-3.5 bg-[#e02b20] text-white rounded-lg font-semibold hover:bg-[#c9241b] transition-colors shadow-md">
               Tizim ko'rinishida sinash
-            </Link>
+            </button>
           </div>
 
           {/* Right Abstract UI */}
@@ -368,9 +368,9 @@ export default function LandingChorusStyle() {
             <p className="text-[17px] text-slate-500 mb-8 leading-relaxed max-w-lg">
               Sotuv rahbari (ROP) yoki biznes egasi sifatida siz doimo band bo'lasiz. Biz qiyin tahlillarni bitta vizual ekranda va diagrammalarda ko'rsatamiz. Kunning eng zo'r ishlaganlari va qizil zonadagi(muammoli) qo'ng'iroqlarni 1 daqiqada kuzating.
             </p>
-            <Link href="/register" className="inline-flex items-center justify-center px-8 py-3.5 bg-[#e02b20] text-white rounded-lg font-semibold hover:bg-[#c9241b] transition-colors shadow-md">
+            <button onClick={() => { setShowModal(true); setIsSuccess(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="inline-flex items-center justify-center px-8 py-3.5 bg-[#e02b20] text-white rounded-lg font-semibold hover:bg-[#c9241b] transition-colors shadow-md">
               Boshlash
-            </Link>
+            </button>
           </div>
 
           {/* Right Abstract UI */}
