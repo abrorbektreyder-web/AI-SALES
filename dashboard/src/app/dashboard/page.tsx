@@ -1,8 +1,8 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Search, PhoneIncoming, AlertCircle, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Search, PhoneIncoming, AlertCircle, Activity, ArrowUpRight, ArrowDownRight, LogOut } from "lucide-react";
 import prisma from "@/lib/db";
 import { startOfDay, subDays } from "date-fns";
 
@@ -194,15 +194,22 @@ export default async function Dashboard() {
             className="bg-transparent border-none outline-none text-sm text-white/90 w-full placeholder:text-white/40"
           />
         </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium leading-none">Rustamov S.</p>
-            <p className="text-xs text-white/50">Sotuv Rahbari (ROP)</p>
+        <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-medium leading-none">Rustamov S.</p>
+              <p className="text-xs text-white/50">Sotuv Rahbari (ROP)</p>
+            </div>
+            <div className="size-10 rounded-full bg-zinc-800 border-2 border-white/10 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
+            </div>
           </div>
-          <div className="size-10 rounded-full bg-zinc-800 border-2 border-white/10 overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
-          </div>
+          <div className="h-8 w-px bg-white/10 hidden sm:block"></div>
+          <Link href="/" className="flex items-center gap-2 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-lg transition-colors border border-rose-500/20 text-sm font-medium">
+            <LogOut className="size-4" />
+            <span className="hidden sm:inline">Chiqish</span>
+          </Link>
         </div>
       </header>
 
