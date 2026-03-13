@@ -206,7 +206,7 @@ export default async function Dashboard() {
             </div>
           </div>
           <div className="h-8 w-px bg-white/10 hidden sm:block"></div>
-          <Link href="/" className="flex items-center gap-2 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-lg transition-colors border border-rose-500/20 text-sm font-medium">
+          <Link href="/login" className="flex items-center gap-2 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-lg transition-colors border border-rose-500/20 text-sm font-medium">
             <LogOut className="size-4" />
             <span className="hidden sm:inline">Chiqish</span>
           </Link>
