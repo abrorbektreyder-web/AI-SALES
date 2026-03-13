@@ -135,7 +135,7 @@ export default function LandingChorusStyle() {
                               <Lock className="h-4 w-4 text-white/30" />
                             </div>
                             <input type={showPassword ? 'text' : 'password'} required placeholder="Maxfiy parol" className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" />
-                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/50 hover:text-white transition-colors">
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors">
                               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                           </div>
