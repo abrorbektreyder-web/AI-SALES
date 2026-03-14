@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Search, PhoneIncoming, AlertCircle, Activity, ArrowUpRight, ArrowDownRight, LogOut } from "lucide-react";
+import { Search, PhoneIncoming, AlertCircle, Activity, ArrowUpRight, ArrowDownRight, LogOut, Users } from "lucide-react";
 import prisma from "@/lib/db";
 import { startOfDay, subDays } from "date-fns";
 
@@ -206,6 +206,10 @@ export default async function Dashboard() {
             </div>
           </div>
           <div className="h-8 w-px bg-white/10 hidden sm:block"></div>
+          <Link href="/agents" className="flex items-center gap-2 px-3 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg transition-colors border border-purple-500/20 text-sm font-medium">
+            <Users className="size-4" />
+            <span className="hidden sm:inline">Xodimlar</span>
+          </Link>
           <Link href="/login" className="flex items-center gap-2 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-lg transition-colors border border-rose-500/20 text-sm font-medium">
             <LogOut className="size-4" />
             <span className="hidden sm:inline">Chiqish</span>

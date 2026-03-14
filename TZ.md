@@ -67,7 +67,7 @@ Loyiha jarayonida adashmaslik va oson nazorat qilish uchun har bir faza belgilab
 
 ### 2-Faza: Mobil Ilova va Backend API (MVP - Call Recording)
 - [x] 2.1. Sotuvchilar tizimga kirishi (Login/Auth) va shaxsiy kabinetini Backend'ga ulash.
-- [ ] 2.2. Mobil ilova ichida SIP Mijozini (Softphone) o'rnatish.
+- [x] 2.2. Mobil ilova ichida SIP Mijozini (Softphone) o'rnatish.
 - [x] 2.3. Qo'ng'iroq amalga oshishi va tugashi bilan `.mp3` yoki `.wav` fayl tarzida Backend'ga (S3 ga) yuborilishini sozlash.
 - [x] 2.4. Dashboard'da ROP kelib tushgan yozuvlarni audiosi bilan eshita olishini ta'minlash (Oddiy Pleyer).
 
