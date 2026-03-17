@@ -56,16 +56,19 @@ export async function POST(req: NextRequest) {
         role: user.role,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Noto'g'ri ma'lumot", details: error.issues },
         { status: 400 }
       );
     }
-    console.error("Login xatosi:", error);
+    console.error(`[Login Critical Error] Full Error:`, error);
     return NextResponse.json(
-      { error: "Server ichki xatosi" },
+      { 
+        error: "Server ichki xatosi", 
+        details: error.message || String(error)
+      },
       { status: 500 }
     );
   }

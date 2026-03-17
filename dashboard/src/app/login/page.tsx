@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Lock, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ShieldCheck, Eye, EyeOff, PhoneCall } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -10,15 +10,44 @@ export default function LoginROP() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Tizimdan chiqish bosilsa shu pagega keladi, demak localStorage ni tozalash kerak
+  useEffect(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate Login call
-    setTimeout(() => {
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Tizimga kirishda xatolik");
+        return;
+      }
+
+      // Token va user saqlash
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      router.push("/dashboard");
+    } catch {
+      setErrorMsg("Server bilan bog'lanishda xato");
+    } finally {
       setIsSubmitting(false);
-      router.push('/dashboard');
-    }, 1500);
+    }
   };
 
   return (
@@ -56,16 +85,25 @@ export default function LoginROP() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3.5">
-            {/* Email Input */}
+            {errorMsg && (
+              <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm px-4 py-3 rounded-xl">
+                {errorMsg}
+              </div>
+            )}
+            
+            {/* Phone Input */}
+            {/* Phone Input */}
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                <PhoneCall className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
               </div>
               <input
-                type="email"
+                type="text"
                 required
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
                 className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 sm:py-3 pl-10 sm:pl-11 pr-4 text-sm sm:text-base text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-medium"
-                placeholder="Elektron pochta"
+                placeholder="Telefon raqam (masalan: 998901234567)"
               />
             </div>
 
@@ -77,6 +115,8 @@ export default function LoginROP() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
                 className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 sm:py-3 pl-10 sm:pl-11 pr-12 text-sm sm:text-base text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-medium"
                 placeholder="Parol"
               />

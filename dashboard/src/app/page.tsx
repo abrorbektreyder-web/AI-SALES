@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Activity, Mic, Bot, BarChart3, ArrowRight, CheckCircle2, PhoneIncoming, AlertTriangle, User, Building2, Mail, Lock, Eye, EyeOff, X } from 'lucide-react';
+import { Play, Activity, Mic, Bot, BarChart3, ArrowRight, CheckCircle2, PhoneIncoming, AlertTriangle, User, Building2, Mail, Lock, Eye, EyeOff, X, PhoneCall } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -32,8 +32,16 @@ export default function LandingChorusStyle() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const modalRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+
+  // Form states
+  const [name, setName] = useState("");
+  const [company, setCompany] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
 
   // Close modal when clicking outside
   useEffect(() => {
@@ -46,17 +54,45 @@ export default function LandingChorusStyle() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showModal]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          company,
+          email,
+          phone,
+          password,
+          role: "ROP"
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Xatolik yuz berdi");
+        return;
+      }
+
+      // Token va user saqlash
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
       setIsSuccess(true);
       setTimeout(() => {
         setShowModal(false);
-        router.push('/dashboard');
+        router.push("/dashboard");
       }, 2000);
-    }, 1500);
+    } catch {
+      setErrorMsg("Server bilan bog'lanishda xato");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -112,29 +148,75 @@ export default function LandingChorusStyle() {
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-3">
+                          {errorMsg && (
+                            <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[11px] px-3 py-2 rounded-lg">
+                              {errorMsg}
+                            </div>
+                          )}
                           <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                               <User className="h-4 w-4 text-white/30" />
                             </div>
-                            <input type="text" required placeholder="F.I.SH (Ism va familiya)" className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" />
+                            <input 
+                              type="text" 
+                              required 
+                              value={name}
+                              onChange={e => setName(e.target.value)}
+                              placeholder="Ism va sharif" 
+                              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" 
+                            />
                           </div>
                           <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                               <Building2 className="h-4 w-4 text-white/30" />
                             </div>
-                            <input type="text" required placeholder="Kompaniya nomi" className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" />
+                            <input 
+                              type="text" 
+                              required 
+                              value={company}
+                              onChange={e => setCompany(e.target.value)}
+                              placeholder="Kompaniya nomi" 
+                              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" 
+                            />
                           </div>
                           <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                               <Mail className="h-4 w-4 text-white/30" />
                             </div>
-                            <input type="email" required placeholder="Elektron pochta" className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" />
+                            <input 
+                              type="email" 
+                              required 
+                              value={email}
+                              onChange={e => setEmail(e.target.value)}
+                              placeholder="Elektron pochta" 
+                              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" 
+                            />
+                          </div>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                              <PhoneCall className="h-4 w-4 text-white/30" />
+                            </div>
+                            <input 
+                              type="tel" 
+                              required 
+                              value={phone}
+                              onChange={e => setPhone(e.target.value)}
+                              placeholder="998901234567" 
+                              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all font-mono" 
+                            />
                           </div>
                           <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                               <Lock className="h-4 w-4 text-white/30" />
                             </div>
-                            <input type={showPassword ? 'text' : 'password'} required placeholder="Maxfiy parol" className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" />
+                            <input 
+                              type={showPassword ? 'text' : 'password'} 
+                              required 
+                              value={password}
+                              onChange={e => setPassword(e.target.value)}
+                              placeholder="Maxfiy parol" 
+                              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" 
+                            />
                             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors">
                               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>

@@ -8,6 +8,8 @@ import { signToken } from "@/lib/auth";
 const registerSchema = z.object({
   name: z.string().min(2, "Ism kamida 2 belgi bo'lishi kerak"),
   phone: z.string().min(9, "Telefon raqam noto'g'ri"),
+  email: z.string().email("Email noto'g'ri").optional().or(z.literal("")),
+  company: z.string().optional().or(z.literal("")),
   password: z.string().min(6, "Parol kamida 6 belgi bo'lishi kerak"),
   role: z.enum(["ROP", "AGENT"]).default("AGENT"),
 });
@@ -34,10 +36,13 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(data.password, 12);
 
     // Foydalanuvchini bazaga saqlash
+    console.log(`[Register] Creating user: ${data.phone}, Role: ${data.role}, Co: ${data.company}`);
     const user = await prisma.user.create({
       data: {
         name: data.name,
         phone: data.phone,
+        email: data.email,
+        company: data.company,
         password: hashedPassword,
         role: data.role as "ROP" | "AGENT",
       },
@@ -64,16 +69,20 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Noto'g'ri ma'lumot", details: error.issues },
         { status: 400 }
       );
     }
-    console.error("Register xatosi:", error);
+    console.error(`[Register Critical Error] Full Error:`, error);
     return NextResponse.json(
-      { error: "Server ichki xatosi" },
+      { 
+        error: "Server ichki xatosi", 
+        details: error.message || String(error),
+        prisma_error: error.code || "Noma'lum"
+      },
       { status: 500 }
     );
   }

@@ -51,7 +51,10 @@ export default function AgentsPage() {
   const fetchAgents = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/agents');
+      const token = localStorage.getItem("token");
+      const res = await fetch('/api/agents', {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       const data = await res.json();
       setAgents(data.agents || []);
     } catch {
@@ -72,9 +75,13 @@ export default function AgentsPage() {
     setSubmitting(true);
 
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch('/api/agents', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           name: formName,
           phone: formPhone,
@@ -84,7 +91,7 @@ export default function AgentsPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setFormError(data.error || 'Xato yuz berdi');
+        setFormError(data.error + (data.details ? ` (${data.details})` : ''));
         return;
       }
 
@@ -117,9 +124,13 @@ export default function AgentsPage() {
         return;
       }
 
+      const token = localStorage.getItem("token");
       const res = await fetch(`/api/agents/${selectedAgent.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(updateData),
       });
 
@@ -145,8 +156,10 @@ export default function AgentsPage() {
     setSubmitting(true);
 
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`/api/agents/${selectedAgent.id}`, {
         method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (!res.ok) {

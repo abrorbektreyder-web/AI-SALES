@@ -72,7 +72,10 @@ export default function CallsHistory() {
   useEffect(() => {
     async function fetchCalls() {
       try {
-        const res = await fetch("/api/calls");
+        const token = localStorage.getItem("token");
+        const res = await fetch("/api/calls", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
         if (!res.ok) throw new Error("API xatosi");
         
         const data = await res.json();
@@ -140,7 +143,7 @@ export default function CallsHistory() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <header className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <Link href="/">
+          <Link href="/dashboard">
             <Button variant="outline" size="icon" className="border-white/10 hover:bg-white/5 bg-transparent text-white rounded-full">
               <ChevronLeft className="size-5" />
             </Button>
