@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/db";
+import { authenticateRequest, requireRole } from "@/lib/auth";
 
 // ========== PATCH — Agentni tahrirlash (parol almashtirish) ==========
 const updateAgentSchema = z.object({
@@ -14,6 +15,13 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Auth tekshirish
+  const auth = authenticateRequest(req);
+  if (!auth.success) return auth.response;
+
+  const roleCheck = requireRole(auth.payload, "ROP");
+  if (roleCheck) return roleCheck;
+
   try {
     const { id } = await params;
     const body = await req.json();
@@ -72,6 +80,13 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Auth tekshirish
+  const auth = authenticateRequest(req);
+  if (!auth.success) return auth.response;
+
+  const roleCheck = requireRole(auth.payload, "ROP");
+  if (roleCheck) return roleCheck;
+
   try {
     const { id } = await params;
 

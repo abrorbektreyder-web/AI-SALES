@@ -1,32 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
+import { authenticateRequest } from "@/lib/auth";
 import prisma from "@/lib/db";
 
 // GET /api/auth/me — Joriy foydalanuvchi ma'lumotlarini olish (token orqali)
 export async function GET(req: NextRequest) {
+  // Auth middleware orqali tekshirish
+  const auth = authenticateRequest(req);
+  if (!auth.success) return auth.response;
+
   try {
-    const authHeader = req.headers.get("Authorization");
-    
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Avtorizatsiya talab qilinadi" },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.split(" ")[1];
-    const payload = verifyToken(token);
-
-    if (!payload) {
-      return NextResponse.json(
-        { error: "Token yaroqsiz yoki muddati o'tgan" },
-        { status: 401 }
-      );
-    }
-
-    // Bazadan yangi ma'lumotlarni olish
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: auth.payload.userId },
       select: {
         id: true,
         name: true,
@@ -56,3 +40,4 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
