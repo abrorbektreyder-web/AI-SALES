@@ -1,0 +1,13 @@
+# Python virtual environment
+ai-engine/.venv/
+ai-engine/__pycache__/
+ai-engine/*.pyc
+ai-engine/*.pyo
+ai-engine/.pytest_cache/
+
+# Environment variables
+ai-engine/.env
+
+# OS
+.DS_Store
+Thumbs.db
