@@ -2,12 +2,18 @@ import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
 
-const connectionString = `${process.env.DATABASE_URL}`
-
 const prismaClientSingleton = () => {
+  const connectionString = process.env.DATABASE_URL
+  
+  // Vercel build paytida yoki bo'sh URL da xato bermasligi uchun
+  if (!connectionString || connectionString === "undefined" || connectionString.trim() === "") {
+    console.warn("[DB] DATABASE_URL topilmadi, bo'sh client yaratilmoqda (bu build paytida normal bo'lishi mumkin).");
+    return new PrismaClient();
+  }
+
   const pool = new Pool({ 
     connectionString,
-    max: 1, // Prisma dev proxy uchun bitta ulanish barqarorlikni ta'minlaydi
+    max: 1, 
     connectionTimeoutMillis: 5000,
   })
   const adapter = new PrismaPg(pool)
