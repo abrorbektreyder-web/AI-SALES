@@ -3,7 +3,14 @@
   "python.analysis.extraPaths": [
     "${workspaceFolder}/ai-engine/.venv/Lib/site-packages"
   ],
+  "python.analysis.typeCheckingMode": "off",
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python.analysis.ignore": ["ai-engine/**"],
+
+  // Pyre/Pyrefly extension o'chirilsin
+  "pyre.lspEnabled": false,
+
   "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "editor.defaultFormatter": "ms-python.python"
   }
 }

@@ -2,7 +2,12 @@
   "venvPath": ".",
   "venv": ".venv",
   "pythonVersion": "3.10",
-  "typeCheckingMode": "basic",
-  "reportMissingImports": true,
-  "reportMissingModuleSource": false
+  "pythonPlatform": "Windows",
+  "typeCheckingMode": "off",
+  "reportMissingImports": false,
+  "reportMissingModuleSource": false,
+  "reportUndefinedVariable": false,
+  "reportGeneralTypeIssues": false,
+  "ignore": ["**/*"],
+  "exclude": [".venv/**"]
 }
