@@ -3,6 +3,10 @@ AI Sales Pilot — AI Engine
 STT (Speech-to-Text) + LLM Tahlil Tizimi
 """
 
+import os
+import asyncio
+import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -18,10 +22,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS
+# CORS — production uchun aniq domenlar ko'rsatilishi kerak
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        DASHBOARD_URL,
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,6 +36,9 @@ app.add_middleware(
 
 # OpenAI client
 client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+
+# Thread pool — sync OpenAI SDK chaqiruvlari uchun
+_executor = ThreadPoolExecutor(max_workers=4)
 
 
 # ========== MODELS ==========
@@ -94,23 +104,33 @@ async def transcribe_audio(audio_url: str) -> str:
             raise HTTPException(status_code=400, detail="Audio faylni yuklab bo'lmadi")
         audio_bytes = response.content
     
-    # Vaqtincha faylga saqlash
-    temp_path = f"/tmp/audio_{hash(audio_url)}.mp3"
-    with open(temp_path, "wb") as f:
-        f.write(audio_bytes)
-    
-    # Whisper API orqali transkripsiya
-    with open(temp_path, "rb") as audio_file:
-        transcription = client.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file,
-            language="uz",  # O'zbek tili
-            response_format="text"
-        )
-    
-    # Vaqtincha faylni o'chirish
-    import os
-    os.remove(temp_path)
+    # Vaqtincha faylga saqlash (tempfile — Windows/Linux mos)
+    temp_file = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+    temp_path = temp_file.name
+    try:
+        temp_file.write(audio_bytes)
+        temp_file.close()
+        
+        # Whisper API orqali transkripsiya (sync chaqiruvni alohida thread'da bajarish)
+        # client None emasligini yuqorida tekshirdik, shu uchun xavfsiz
+        openai_client = client  # local reference for thread safety
+        assert openai_client is not None
+        
+        def _transcribe() -> str:
+            with open(temp_path, "rb") as audio_file:
+                result = openai_client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    language="uz",  # O'zbek tili
+                    response_format="text"
+                )
+                return result if isinstance(result, str) else str(result)
+        
+        loop = asyncio.get_event_loop()
+        transcription = await loop.run_in_executor(_executor, _transcribe)  # type: ignore[arg-type]
+    finally:
+        # Vaqtincha faylni o'chirish
+        os.remove(temp_path)
     
     return transcription
 
@@ -142,17 +162,25 @@ async def analyze_with_llm(transcript: str) -> tuple[int, str]:
     if not client:
         raise HTTPException(status_code=500, detail="OpenAI API kaliti sozlanmagan")
     
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": ANALYSIS_PROMPT},
-            {"role": "user", "content": f"Suhbat matni:\n\n{transcript}"}
-        ],
-        temperature=0.3,
-        max_tokens=500
-    )
+    openai_client = client  # local reference for thread safety
+    assert openai_client is not None
     
-    result = response.choices[0].message.content or ""
+    def _analyze() -> str:
+        resp = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": ANALYSIS_PROMPT},
+                {"role": "user", "content": f"Suhbat matni:\n\n{transcript}"}
+            ],
+            temperature=0.3,
+            max_tokens=500
+        )
+        return resp.choices[0].message.content or ""
+    
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(_executor, _analyze)  # type: ignore[arg-type]
+    
+    # result yuqoridagi _analyze() dan keladi
     
     # Natijani parse qilish
     score = 3  # default

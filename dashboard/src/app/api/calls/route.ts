@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/db";
+import { authenticateRequest } from "@/lib/auth";
 
 const createCallSchema = z.object({
   userId: z.string(),
@@ -10,6 +11,10 @@ const createCallSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // Auth tekshirish
+  const auth = authenticateRequest(req);
+  if (!auth.success) return auth.response;
+
   try {
     const body = await req.json();
     const data = createCallSchema.parse(body);
@@ -43,7 +48,11 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Auth tekshirish
+  const auth = authenticateRequest(req);
+  if (!auth.success) return auth.response;
+
   try {
     const calls = await prisma.callRecord.findMany({
       include: {

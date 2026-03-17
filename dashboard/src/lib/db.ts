@@ -5,17 +5,21 @@ import { PrismaClient } from '@prisma/client'
 const connectionString = `${process.env.DATABASE_URL}`
 
 const prismaClientSingleton = () => {
-  const pool = new Pool({ connectionString })
+  const pool = new Pool({ 
+    connectionString,
+    max: 1, // Prisma dev proxy uchun bitta ulanish barqarorlikni ta'minlaydi
+    connectionTimeoutMillis: 5000,
+  })
   const adapter = new PrismaPg(pool)
   return new PrismaClient({ adapter })
 }
 
-declare global {
-  var prisma: undefined | ReturnType<typeof prismaClientSingleton>
+const globalForPrisma = globalThis as unknown as {
+  prisma: ReturnType<typeof prismaClientSingleton> | undefined
 }
 
-const prisma = globalThis.prisma ?? prismaClientSingleton()
+const prisma = globalForPrisma.prisma ?? prismaClientSingleton()
 
 export default prisma
 
-if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma

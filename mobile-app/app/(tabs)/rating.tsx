@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Pressable } from 'react-native';
-import { Star, TrendingUp, AlertTriangle, PlayCircle } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, Pressable, Platform } from 'react-native';
+import { Star, TrendingUp, AlertTriangle, PlayCircle, LogOut } from 'lucide-react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
+import { router } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 
 const getScoreColor = (score: number) => {
   if (score >= 4) return '#10B981'; // Green
@@ -13,14 +15,34 @@ export default function RatingScreen() {
   const [SCORE] = useState<number>(2); // For demonstration. Less than 4 is considered BAD in this app visually.
   const scoreColor = getScoreColor(SCORE);
 
+  const handleLogout = async () => {
+    try {
+      if (Platform.OS === 'web') {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+      } else {
+        await SecureStore.deleteItemAsync('auth_token');
+        await SecureStore.deleteItemAsync('user_data');
+      }
+      router.replace('/(auth)/login');
+    } catch (error) {
+      console.error("Logout error", error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
         {/* Header */}
         <Animated.View entering={FadeInUp.duration(500)} style={styles.header}>
-          <Text style={styles.headerTitle}>Sizning reytingingiz</Text>
-          <Text style={styles.headerSubtitle}>So'nggi 30 kunlik natijalar</Text>
+          <View>
+            <Text style={styles.headerTitle}>Sizning reytingingiz</Text>
+            <Text style={styles.headerSubtitle}>So'nggi 30 kunlik natijalar</Text>
+          </View>
+          <Pressable onPress={handleLogout} style={styles.logoutBtn}>
+            <LogOut color="#EF4444" size={24} />
+          </Pressable>
         </Animated.View>
 
         {/* Score Card */}
@@ -95,18 +117,25 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
   },
   header: {
-    marginBottom: 32,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 32,
   },
   headerTitle: {
     color: '#F8FAFC',
     fontSize: 28,
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   headerSubtitle: {
     color: '#94A3B8',
     fontSize: 14,
+  },
+  logoutBtn: {
+    padding: 10,
+    backgroundColor: '#EF444420',
+    borderRadius: 12,
   },
   scoreCard: {
     backgroundColor: '#1E293B',

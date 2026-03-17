@@ -2,9 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/db";
+import { authenticateRequest, requireRole } from "@/lib/auth";
 
 // ========== GET — Barcha AGENTlarni olish ==========
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Auth tekshirish
+  const auth = authenticateRequest(req);
+  if (!auth.success) return auth.response;
+
+  // Faqat ROP ko'rishi mumkin
+  const roleCheck = requireRole(auth.payload, "ROP");
+  if (roleCheck) return roleCheck;
+
   try {
     const agents = await prisma.user.findMany({
       where: { role: "AGENT" },
@@ -23,7 +32,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ agents });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Agentlarni olishda xato:", error);
     return NextResponse.json(
       { error: "Server xatosi" },
@@ -40,6 +49,14 @@ const createAgentSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // Auth tekshirish
+  const auth = authenticateRequest(req);
+  if (!auth.success) return auth.response;
+
+  // Faqat ROP qo'shishi mumkin
+  const roleCheck = requireRole(auth.payload, "ROP");
+  if (roleCheck) return roleCheck;
+
   try {
     const body = await req.json();
     const data = createAgentSchema.parse(body);
@@ -78,7 +95,7 @@ export async function POST(req: NextRequest) {
       { message: "Sotuvchi muvaffaqiyatli qo'shildi", agent },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Noto'g'ri ma'lumot", details: error.issues },
@@ -87,7 +104,7 @@ export async function POST(req: NextRequest) {
     }
     console.error("Agent qo'shishda xato:", error);
     return NextResponse.json(
-      { error: "Server xatosi" },
+      { error: "Server xatosi", fullError: error.message || String(error) },
       { status: 500 }
     );
   }
