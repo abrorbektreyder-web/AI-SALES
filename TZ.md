@@ -75,7 +75,7 @@ Loyiha jarayonida adashmaslik va oson nazorat qilish uchun har bir faza belgilab
 - [x] 3.1. STT (Speech-to-Text) integratsiyasi: Audio faylni fonda qabul qilib, uni tekstga o'girib DB ga yozish.
 - [x] 3.2. LLM (AI Tahlilchi) Promtini yaratish: AI o'girilgan tekstni o'qib unga 1-5 gacha ball berish logikasini o'rgatish (Prompt Engineering).
 - [x] 3.3. Xulosa (Summary) va bahoni tizim bazasiga kiritish va API orqali chiqarish.
-- [ ] 3.4. Darsliklar tavsiya qilish algoritmi: AI ko'rgan xatosiga mos Dars ID (URL) ni bazadan topib biriktirishi.
+- [x] 3.4. Darsliklar tavsiya qilish algoritmi: AI ko'rgan xatosiga mos Dars ID (URL) ni bazadan topib biriktirishi.
 
 ### 4-Faza: ROP Premium Dashboard
 - [x] 4.1. Next.js da ROP Dashboard'ning asosiy layoutlarini qurish.
@@ -84,9 +84,9 @@ Loyiha jarayonida adashmaslik va oson nazorat qilish uchun har bir faza belgilab
 - [x] 4.4. Ilg'or Audio Pleyer: Ovozlarni va tegida AI xulosasini ko'rsatish funksiyasini ulash.
 
 ### 5-Faza: Mobil Ilova (Sotuvchilar) Qayta aloqa modullari
-- [ ] 5.1. Sotuvchi ilovasida "Mening qo'ng'iroqlarim" va xulosalar tarixi sahifalarini ulash.
-- [ ] 5.2. Ilova ichida tavsiya yetilgan videolarni/darslarni ko'rish "Skill Up" imkoniyati.
-- [ ] 5.3. Real time Socket orqali: Qo'ng'iroq qilib bo'lgandan so'ng 1-2 daqiqada push-notification kelishi ("AI sizning suhbatingizni 4 ballga baholadi").
+- [x] 5.1. Sotuvchi ilovasida "Mening qo'ng'iroqlarim" va xulosalar tarixi sahifalarini ulash.
+- [x] 5.2. Ilova ichida tavsiya yetilgan videolarni/darslarni ko'rish "Skill Up" imkoniyati.
+- [x] 5.3. Real time Socket orqali: Qo'ng'iroq qilib bo'lgandan so'ng 1-2 daqiqada push-notification kelishi ("AI sizning suhbatingizni 4 ballga baholadi").
 
 ### 6-Faza: Tozalash, Testlash va Alfa ishga tushirish
 - [ ] 6.1. Stres-test (Bir vaqtda 50+ qo'ng'iroq bo'lsa server STT ga qanday dosh berishini tekshirish).

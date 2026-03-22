@@ -1,9 +1,70 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, View, Platform } from 'react-native';
 import { Phone, Star } from 'lucide-react-native';
+import * as Notifications from 'expo-notifications';
+import * as SecureStore from 'expo-secure-store';
+import axios from 'axios';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+const API_URL = Platform.OS === 'web' 
+  ? 'http://localhost:3000/api' 
+  : 'http://10.160.103.193:3000/api'; 
 
 export default function TabLayout() {
+  const previousCallsRef = useRef<Record<string, string>>({}); // id -> status
+
+  useEffect(() => {
+    // Har 10 soniyada so'rov yuborib AI tahlil javobini tekshiramiz
+    const interval = setInterval(async () => {
+      try {
+        const token = Platform.OS === 'web' 
+          ? localStorage.getItem('auth_token')
+          : await SecureStore.getItemAsync('auth_token');
+          
+        if (!token) return;
+
+        const res = await axios.get(`${API_URL}/agent/dashboard`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const newCalls = res.data.calls || [];
+        const currentStates: Record<string, string> = {};
+        
+        for (const call of newCalls) {
+          currentStates[call.id] = call.status;
+          
+          const oldStatus = previousCallsRef.current[call.id];
+          if (oldStatus === 'ANALYZING' && call.status === 'COMPLETED' && call.analysis) {
+            // QO'NG'IROQ TAHLIL QILINDI! (Push Notification jo'natamiz)
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: "🧠 AI Tahlil yakunlandi!",
+                body: `Sizning oxirgi suhbatingiz ${call.analysis.score} ballga baholandi. Xulosa tayyor.`,
+                sound: true,
+              },
+              trigger: null,
+            });
+          }
+        }
+        
+        previousCallsRef.current = currentStates;
+      } catch (err) {
+        console.log("Polling error:", err);
+      }
+    }, 10000); 
+
+    return () => clearInterval(interval);
+  }, []);
   return (
     <Tabs
       screenOptions={{

@@ -4,6 +4,9 @@ import { Star, TrendingUp, AlertTriangle, PlayCircle, LogOut } from 'lucide-reac
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import axios from 'axios';
+import { useEffect } from 'react';
+import * as Linking from 'expo-linking';
 
 const getScoreColor = (score: number) => {
   if (score >= 4) return '#10B981'; // Green
@@ -12,8 +15,42 @@ const getScoreColor = (score: number) => {
 };
 
 export default function RatingScreen() {
-  const [SCORE] = useState<number>(2); // For demonstration. Less than 4 is considered BAD in this app visually.
+  const [SCORE, setScore] = useState<number>(0);
+  const [calls, setCalls] = useState<any[]>([]);
+  const [lesson, setLesson] = useState<any>(null);
+  const [reason, setReason] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const API_URL = Platform.OS === 'web' 
+    ? 'http://localhost:3000/api' 
+    : 'http://10.160.103.193:3000/api'; 
+
   const scoreColor = getScoreColor(SCORE);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const token = Platform.OS === 'web' 
+        ? localStorage.getItem('auth_token')
+        : await SecureStore.getItemAsync('auth_token');
+
+      const res = await axios.get(`${API_URL}/agent/dashboard`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setScore(res.data.averageScore || 0);
+      setCalls(res.data.calls || []);
+      setLesson(res.data.recommendedLesson || null);
+      setReason(res.data.recentBadCallReason || null);
+    } catch (e) {
+      console.error("Dashboard datasi xatosi:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -48,7 +85,7 @@ export default function RatingScreen() {
         {/* Score Card */}
         <Animated.View entering={FadeInUp.delay(200).duration(500)} style={[styles.scoreCard, { shadowColor: scoreColor }]}>
           <View style={[styles.scoreCircle, { borderColor: scoreColor }]}>
-            <Text style={[styles.scoreText, { color: scoreColor }]}>{SCORE}.0</Text>
+            <Text style={[styles.scoreText, { color: scoreColor }]}>{SCORE}</Text>
             <Text style={styles.scoreMax}>/ 5</Text>
           </View>
           
@@ -63,18 +100,21 @@ export default function RatingScreen() {
         </Animated.View>
 
         {/* Actions / Skill Up if Score is Low */}
-        {SCORE < 4 && (
+        {SCORE < 4 && lesson && (
           <Animated.View entering={FadeInUp.delay(400).duration(500)} style={styles.alertCard}>
             <View style={styles.alertHeader}>
               <AlertTriangle color="#F87171" size={24} />
               <Text style={styles.alertTitle}>Zudlik bilan darsni ko'ring!</Text>
             </View>
             <Text style={styles.alertBody}>
-              AI sizning oxirgi 5 ta qo'ng'irog'ingizda "Narx qimmat" e'tiroziga noto'g'ri javob berganingizni aniqladi. Qat'iylik yetishmayapti.
+              AI xulosasi: {reason}
             </Text>
-            <Pressable style={styles.videoBtn}>
+            <Pressable 
+              style={styles.videoBtn}
+              onPress={() => Linking.openURL(lesson.url)}
+            >
               <PlayCircle color="#FFF" size={20} />
-              <Text style={styles.videoBtnText}>Qutqaruv darsi: "Narx qimmatiga javob"</Text>
+              <Text style={styles.videoBtnText}>Qutqaruv darsi: "{lesson.title}"</Text>
             </Pressable>
           </Animated.View>
         )}
@@ -83,22 +123,22 @@ export default function RatingScreen() {
         <Animated.View entering={FadeInUp.delay(600).duration(500)} style={styles.callsSection}>
           <Text style={styles.sectionTitle}>Oxirgi baholangan suhbatlar</Text>
           
-          {[1, 2, 3].map((item, index) => (
-            <View key={index} style={styles.callRow}>
+          {calls.length > 0 ? calls.map((item, index) => (
+            <View key={item.id || index} style={styles.callRow}>
               <View style={styles.callIconBox}>
                 <TrendingUp size={20} color="#94A3B8" />
               </View>
               <View style={styles.callInfo}>
-                <Text style={styles.callName}>Mijoz +998 90 *** ** 4{item}</Text>
-                <Text style={styles.callStatus}>Bugun, 14:0{item}</Text>
+                <Text style={styles.callName}>Mijoz {item.customerPhone}</Text>
+                <Text style={styles.callStatus}>{new Date(item.createdAt).toLocaleString()}</Text>
               </View>
-              <View style={[styles.callBadge, { backgroundColor: index === 0 ? '#EF444433' : '#10B98133' }]}>
-                <Text style={[{ fontSize: 14, fontWeight: '700' }, { color: index === 0 ? '#EF4444' : '#10B981' }]}>
-                  {index === 0 ? '2.0' : '4.5'}
+              <View style={[styles.callBadge, { backgroundColor: item.analysis?.score >= 4 ? '#10B98133' : '#EF444433' }]}>
+                <Text style={[{ fontSize: 14, fontWeight: '700' }, { color: item.analysis?.score >= 4 ? '#10B981' : '#EF4444' }]}>
+                  {item.analysis?.score || '?'}
                 </Text>
               </View>
             </View>
-          ))}
+          )) : <Text style={{ color: '#94A3B8' }}>Hozircha suhbatlar yo'q</Text>}
         </Animated.View>
 
       </ScrollView>
