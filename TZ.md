@@ -91,7 +91,7 @@ Loyiha jarayonida adashmaslik va oson nazorat qilish uchun har bir faza belgilab
 ### 6-Faza: Tozalash, Testlash va Alfa ishga tushirish
 - [ ] 6.1. Stres-test (Bir vaqtda 50+ qo'ng'iroq bo'lsa server STT ga qanday dosh berishini tekshirish).
 - [ ] 6.2. UI/UX detallar, mikroanimatsiyalar, "premium" feeling hislarini shakllantirish va chiroylilashtirish.
-- [ ] 6.3. Alpha test: Bitta sotuv bo'limida ishlatib ko'rish va xatolarini (bug fix) to'g'rilash.
+- [x] 6.3. Alpha test: Bitta sotuv bo'limida ishlatib ko'rish va xatolarini (bug fix) to'g'rilash. (Prisma 5 ga tushirildi, server internal error portlari moslandi, Dialer ulandi).
 - [ ] 6.4. Loyihani jonli obunalarga (Production) ochish.
 
 ---

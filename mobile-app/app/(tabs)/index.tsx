@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, SafeAreaView, Linking } from 'react-native';
 import { Phone, Delete } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
@@ -84,8 +84,18 @@ export default function DialerScreen() {
   const handleCall = () => {
     if (!phoneNumber) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    // TODO: Connect SIP call logic
-    console.log('Calling...', phoneNumber);
+    
+    // Asl SIM-karta orqali real qo'ng'iroqqa o'tkazish
+    const telUrl = `tel:${phoneNumber}`;
+    Linking.canOpenURL(telUrl)
+      .then((supported) => {
+        if (supported) {
+          Linking.openURL(telUrl);
+        } else {
+          console.error("Telefon qilish qismi ushbu qurilmada bloklangan yoki mavjud emas");
+        }
+      })
+      .catch((err) => console.error("Telefon xatosi:", err));
   };
 
   const DialButton = ({ num, letters, onLongPress }: { num: string; letters: string; onLongPress?: () => void }) => (

@@ -1,6 +1,1 @@
-import { defineConfig } from '@prisma/config';
-
-export default defineConfig({
-  schema: 'prisma/schema.prisma',
-  // DATABASE_URL va boshqa sozlamalar avtomat ravishda env dan olinadi
-});
+// prisma.config.js - Prisma 5 da bu fayl kerak emas, mavjud bo'lsa ham ishlaydi

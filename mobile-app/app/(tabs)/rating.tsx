@@ -23,7 +23,7 @@ export default function RatingScreen() {
 
   const API_URL = Platform.OS === 'web' 
     ? 'http://localhost:3000/api' 
-    : 'http://10.160.103.193:3000/api'; 
+    : 'http://10.174.143.193:3000/api'; 
 
   const scoreColor = getScoreColor(SCORE);
 

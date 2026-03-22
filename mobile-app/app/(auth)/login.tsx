@@ -11,7 +11,7 @@ import * as SecureStore from 'expo-secure-store';
 // Expo Go orqali telefonda kirishingiz uchun IP manzil to'g'ri bo'lishi shart.
 const API_URL = Platform.OS === 'web' 
   ? 'http://localhost:3000/api' 
-  : 'http://10.160.103.193:3000/api'; 
+  : 'http://10.174.143.193:3000/api'; 
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
