@@ -53,6 +53,7 @@ class AnalyzeResponse(BaseModel):
     score: int
     summary: str
     transcript: str
+    recommendedLessonId: str | None = None
 
 
 # ========== DATABASE HELPER ==========
@@ -62,7 +63,30 @@ def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
 
-def update_analysis_in_db(call_id: str, score: int, summary: str, transcript: str):
+def find_lesson_in_db(tag: str) -> str | None:
+    """Mos darsni bazadan izlash"""
+    if not tag or len(tag.strip()) == 0:
+        return None
+        
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Tag so'zi qatnashgan darsni izlash
+        cur.execute("""
+            SELECT id FROM "Lesson" 
+            WHERE title ILIKE %s OR type ILIKE %s
+            LIMIT 1
+        """, (f"%{tag}%", f"%{tag}%"))
+        row = cur.fetchone()
+        return row[0] if row else None
+    except Exception as e:
+        print(f"Error finding lesson: {e}")
+        return None
+    finally:
+        cur.close()
+        conn.close()
+
+def update_analysis_in_db(call_id: str, score: int, summary: str, transcript: str, lesson_id: str | None = None):
     """AI tahlil natijasini bazaga yozish"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -70,11 +94,11 @@ def update_analysis_in_db(call_id: str, score: int, summary: str, transcript: st
     try:
         # AiAnalysis jadvaliga yozish
         cur.execute("""
-            INSERT INTO "AiAnalysis" (id, "callId", score, summary, transcript, "createdAt")
-            VALUES (gen_random_uuid(), %s, %s, %s, %s, NOW())
+            INSERT INTO "AiAnalysis" (id, "callId", score, summary, transcript, "recommendedLessonId", "createdAt")
+            VALUES (gen_random_uuid(), %s, %s, %s, %s, %s, NOW())
             ON CONFLICT ("callId") DO UPDATE 
-            SET score = EXCLUDED.score, summary = EXCLUDED.summary, transcript = EXCLUDED.transcript
-        """, (call_id, score, summary, transcript))
+            SET score = EXCLUDED.score, summary = EXCLUDED.summary, transcript = EXCLUDED.transcript, "recommendedLessonId" = EXCLUDED."recommendedLessonId"
+        """, (call_id, score, summary, transcript, lesson_id))
         
         # CallRecord statusini yangilash
         cur.execute("""
@@ -151,13 +175,18 @@ Quyida sotuvchi va mijoz o'rtasidagi telefon suhbati matni berilgan. Uni sinchik
 2. **XULOSA YOZ (3-4 gap bilan):**
    Nimada yaxshi ish qildi? Nimada xato qildi? Nima qilsa yaxshiroq bo'lardi?
 
+3. **TAVSIYA (1-2 ta so'zdan iborat o'quv mavzusi):**
+   Sotuvchining xatosini to'g'rilash uchun eng mos dars kalit so'zini yoz.
+   Masalan: "Etirozni ishlash", "Ishonch", "Narx", "Skript", "Mahsulot", "Yopish"
+
 Javobni FAQAT quyidagi formatda ber (boshqa hech narsa yozma):
 BALL: [raqam]
 XULOSA: [matn]
+TAVSIYA: [matn]
 """
 
 
-async def analyze_with_llm(transcript: str) -> tuple[int, str]:
+async def analyze_with_llm(transcript: str) -> tuple[int, str, str]:
     """LLM yordamida suhbatni tahlil qilish"""
     if not client:
         raise HTTPException(status_code=500, detail="OpenAI API kaliti sozlanmagan")
@@ -173,7 +202,7 @@ async def analyze_with_llm(transcript: str) -> tuple[int, str]:
                 {"role": "user", "content": f"Suhbat matni:\n\n{transcript}"}
             ],
             temperature=0.3,
-            max_tokens=500
+            max_tokens=600
         )
         return resp.choices[0].message.content or ""
     
@@ -185,6 +214,7 @@ async def analyze_with_llm(transcript: str) -> tuple[int, str]:
     # Natijani parse qilish
     score = 3  # default
     summary = "Tahlil natijalari mavjud emas"
+    tag = ""
     
     for line in result.strip().split("\n"):
         line = line.strip()
@@ -196,8 +226,10 @@ async def analyze_with_llm(transcript: str) -> tuple[int, str]:
                 score = 3
         elif line.startswith("XULOSA:"):
             summary = line.replace("XULOSA:", "").strip()
+        elif line.startswith("TAVSIYA:"):
+            tag = line.replace("TAVSIYA:", "").strip()
     
-    return score, summary
+    return score, summary, tag
 
 
 # ========== API ENDPOINTS ==========
@@ -234,21 +266,26 @@ async def analyze_call(request: AnalyzeRequest):
             )
         
         # 2. LLM — Tahlil qilish
-        score, summary = await analyze_with_llm(transcript)
+        score, summary, tag = await analyze_with_llm(transcript)
         
-        # 3. Bazaga yozish
+        # 3. Bazadan mos dars izlash
+        lesson_id = find_lesson_in_db(tag) if tag else None
+        
+        # 4. Bazaga yozish
         update_analysis_in_db(
             call_id=request.callId,
             score=score,
             summary=summary,
-            transcript=transcript
+            transcript=transcript,
+            lesson_id=lesson_id
         )
         
         return AnalyzeResponse(
             callId=request.callId,
             score=score,
             summary=summary,
-            transcript=transcript
+            transcript=transcript,
+            recommendedLessonId=lesson_id
         )
     
     except HTTPException:
