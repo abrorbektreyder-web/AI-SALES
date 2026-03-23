@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
     }
     console.error("Agent qo'shishda xato:", error);
     return NextResponse.json(
-      { error: "Server xatosi", fullError: error.message || String(error) },
+      { error: `Server xatosi: ${error.message || String(error)}` },
       { status: 500 }
     );
   }
