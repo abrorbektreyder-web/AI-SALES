@@ -7,13 +7,8 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 // JWT_SECRET endi faqat .env dan olinadi — hardcode qilinmaydi
+// Build vaqtida crash bermasligi uchun tekshirishni ishlayotgan vaqtda (runtime) qilamiz
 const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET && process.env.NODE_ENV === "production") {
-  throw new Error("JWT_SECRET muhit o'zgaruvchisi sozlanmagan! .env faylga qo'shing.");
-}
-
-// JWT_SECRET ni har gal funksiya ichida tekshiramiz — Turbopack hot-reload'da kesh bo'lib qolmasligi uchun
 const getSecret = () => {
   const secret = process.env.JWT_SECRET;
   if (secret) {
