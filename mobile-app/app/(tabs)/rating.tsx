@@ -21,9 +21,7 @@ export default function RatingScreen() {
   const [reason, setReason] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_URL = Platform.OS === 'web' 
-    ? 'http://localhost:3000/api' 
-    : 'http://10.174.143.193:3000/api'; 
+  const API_URL = 'https://ai-sales-roan-three.vercel.app/api'; 
 
   const scoreColor = getScoreColor(SCORE);
 

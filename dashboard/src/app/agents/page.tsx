@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { 
   UserPlus, Users, Search, ArrowLeft, Phone, Lock, User, 
   Trash2, Edit3, X, Eye, EyeOff, Copy, Check, RefreshCw,
-  PhoneIncoming, Shield
+  PhoneIncoming, Shield, QrCode, Download, Share2
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Agent {
@@ -37,7 +38,9 @@ export default function AgentsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [qrToken, setQrToken] = useState('');
 
   // Form states
   const [formName, setFormName] = useState('');
@@ -176,6 +179,33 @@ export default function AgentsPage() {
       setFormError('Server bilan bog\'lanishda xato');
     } finally {
       setSubmitting(false);
+    }
+  };
+  // ========== GENERATE QR ==========
+  const handleGenerateQR = async (agent: Agent) => {
+    setSelectedAgent(agent);
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch('/api/agent/generate-qr', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ agentId: agent.id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setQrToken(data.token);
+        setShowQRModal(true);
+      } else {
+        alert(data.error || "QR yaratishda xatolik");
+      }
+    } catch {
+      alert("Server bilan bog'lanishda xato");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -398,18 +428,27 @@ export default function AgentsPage() {
                   </span>
                 </div>
 
-                {/* Actions */}
-                <div className="col-span-8 md:col-span-2 flex items-center justify-end gap-2">
+                {/* Amallar (Actions) */}
+                <div className="col-span-8 md:col-span-2 flex items-center justify-end gap-2 pr-2">
+                  <button
+                    onClick={() => handleGenerateQR(agent)}
+                    className="p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-all group/qr shadow-lg shadow-emerald-500/5"
+                    title="QR-kod orqali kirish"
+                  >
+                    <QrCode className="size-4 group-hover/qr:scale-110 transition-transform" />
+                  </button>
+                  
                   <button
                     onClick={() => openEditModal(agent)}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-blue-500/20 text-white/40 hover:text-blue-400 transition-colors"
+                    className="p-2.5 rounded-xl bg-white/5 hover:bg-blue-500/20 text-white/40 hover:text-blue-400 transition-all border border-transparent hover:border-blue-500/20"
                     title="Tahrirlash"
                   >
                     <Edit3 className="size-4" />
                   </button>
+                  
                   <button
                     onClick={() => openDeleteModal(agent)}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-rose-500/20 text-white/40 hover:text-rose-400 transition-colors"
+                    className="p-2.5 rounded-xl bg-white/5 hover:bg-rose-500/20 text-white/40 hover:text-rose-400 transition-all border border-transparent hover:border-rose-500/20"
                     title="O'chirish"
                   >
                     <Trash2 className="size-4" />
@@ -640,6 +679,58 @@ export default function AgentsPage() {
               >
                 {submitting ? "O'chirilmoqda..." : "Ha, o'chirish"}
               </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+      </AnimatePresence>
+      {/* ===== QR MODAL ===== */}
+      <AnimatePresence>
+      {showQRModal && selectedAgent && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setShowQRModal(false)}>
+          <motion.div initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-[40px] w-full max-w-[380px] overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* Header with agent name */}
+            <div className="bg-[#0f172a] p-8 text-center relative">
+              <button onClick={() => setShowQRModal(false)} className="absolute right-6 top-6 p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors">
+                <X className="size-5" />
+              </button>
+              <div className="size-16 rounded-3xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-4 border border-emerald-500/30">
+                <Shield className="size-8 text-emerald-400" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-1">{selectedAgent.name}</h2>
+              <p className="text-white/40 text-xs tracking-widest uppercase">Bir martalik kirish kodi</p>
+            </div>
+
+            {/* QR Content */}
+            <div className="p-10 flex flex-col items-center">
+              <div className="p-4 bg-white rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.1)] border border-slate-100">
+                <QRCodeSVG 
+                  value={qrToken}
+                  size={200}
+                  level="H"
+                  includeMargin={false}
+                />
+              </div>
+              
+              <div className="mt-8 space-y-4 w-full">
+                <div className="bg-slate-50 rounded-2xl p-4 flex items-center gap-3">
+                  <div className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <p className="text-[13px] text-slate-600 font-medium">Bu kod 24 soat amal qiladi</p>
+                </div>
+                
+                <div className="flex gap-3">
+                  <button className="flex-1 py-3.5 rounded-2xl bg-slate-900 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors">
+                    <Download className="size-4" /> Rangli yuklash
+                  </button>
+                  <button className="px-5 py-3.5 rounded-2xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                    <Share2 className="size-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-slate-50 p-6 text-center text-[10px] text-slate-400 border-t border-slate-100 uppercase tracking-widest">
+              AI Sales Pilot Security System
             </div>
           </motion.div>
         </motion.div>

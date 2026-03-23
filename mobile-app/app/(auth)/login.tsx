@@ -1,23 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, SafeAreaView, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
-import { Lock, User, Eye, EyeOff, ShieldCheck, ArrowRight } from 'lucide-react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, SafeAreaView, KeyboardAvoidingView, Platform, StatusBar, Modal, ActivityIndicator } from 'react-native';
+import { Lock, User, Eye, EyeOff, ShieldCheck, ArrowRight, QrCode, X } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { router } from 'expo-router';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-// DEV MUHITI UCHUN: 
-// Expo Go orqali telefonda kirishingiz uchun IP manzil to'g'ri bo'lishi shart.
-const API_URL = Platform.OS === 'web' 
-  ? 'http://localhost:3000/api' 
-  : 'http://10.174.143.193:3000/api'; 
+const API_URL = 'https://ai-sales-roan-three.vercel.app/api'; 
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isQRScannerVisible, setIsQRScannerVisible] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -33,30 +32,55 @@ export default function LoginScreen() {
       });
 
       const { token, user } = response.data;
-      
-      // Faqat AGENT roli bormi tekshirish (ixtiyoriy, lekin xavfsizlik uchun yaxshi)
-      if (user.role !== 'AGENT') {
-        alert("Ushbu ilova faqat sotuvchilar uchun mo'ljallangan.");
-        setIsLoading(false);
-        return;
-      }
-
-      if (Platform.OS === 'web') {
-        localStorage.setItem('auth_token', token);
-        localStorage.setItem('user_data', JSON.stringify(user));
-      } else {
-        await SecureStore.setItemAsync('auth_token', token);
-        await SecureStore.setItemAsync('user_data', JSON.stringify(user));
-      }
-
+      await saveAuthSession(token, user);
       router.replace('/(tabs)');
     } catch (error: any) {
-      console.error("Login xatosi:", error);
-      const errorMsg = error.response?.data?.error || "Server bilan bog'lanishda xato. IP manzilni tekshiring.";
+      const errorMsg = error.response?.data?.error || "Login xatosi. Ma'lumotlarni tekshiring.";
       alert(errorMsg);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleQRCodeScanned = async ({ data }: { data: string }) => {
+    setIsQRScannerVisible(false);
+    setIsLoading(true);
+    
+    try {
+      const response = await axios.post(`${API_URL}/auth/qr-login`, {
+        token: data,
+      });
+
+      const { token, user } = response.data;
+      await saveAuthSession(token, user);
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.error || "QR-kod haqiqiy emas yoki muddati o'tgan.";
+      alert(errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveAuthSession = async (token: string, user: any) => {
+    if (Platform.OS === 'web') {
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('user_data', JSON.stringify(user));
+    } else {
+      await SecureStore.setItemAsync('auth_token', token);
+      await SecureStore.setItemAsync('user_data', JSON.stringify(user));
+    }
+  };
+
+  const openQRScanner = async () => {
+    if (!permission?.granted) {
+      const { granted } = await requestPermission();
+      if (!granted) {
+        alert("Kameraga ruxsat berilmagan. QR-kodni skanerlash uchun ruxsat kerak.");
+        return;
+      }
+    }
+    setIsQRScannerVisible(true);
   };
 
   return (
@@ -78,6 +102,23 @@ export default function LoginScreen() {
 
         <Animated.View entering={FadeInDown.duration(800).delay(300)} style={styles.form}>
           
+          <Pressable 
+            style={styles.qrBtn}
+            onPress={openQRScanner}
+          >
+            <View style={styles.qrInner}>
+              <QrCode color="#10B981" size={24} />
+              <Text style={styles.qrText}>QR-kod orqali kirish</Text>
+            </div>
+            <ArrowRight color="#334155" size={16} />
+          </Pressable>
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>YOKI</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Telefon raqam (Login)</Text>
             <View style={styles.inputContainer}>
@@ -139,6 +180,45 @@ export default function LoginScreen() {
 
         </Animated.View>
 
+        {/* LOADING OVERLAY */}
+        {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#10B981" />
+          </View>
+        )}
+
+        {/* QR SCANNER MODAL */}
+        <Modal
+          visible={isQRScannerVisible}
+          animationType="slide"
+          onRequestClose={() => setIsQRScannerVisible(false)}
+        >
+          <View style={styles.scannerContainer}>
+            <CameraView
+              style={StyleSheet.absoluteFillObject}
+              onBarcodeScanned={handleQRCodeScanned}
+              barcodeScannerSettings={{
+                barcodeTypes: ["qr"],
+              }}
+            />
+            <View style={styles.scannerOverlay}>
+              <View style={styles.scannerHeader}>
+                <Text style={styles.scannerTitle}>Skanerlash</Text>
+                <Pressable onPress={() => setIsQRScannerVisible(false)} style={styles.closeBtn}>
+                  <X color="#FFFFFF" size={24} />
+                </Pressable>
+              </View>
+              <View style={styles.scannerFrame}>
+                <View style={styles.scannerCornerTL} />
+                <View style={styles.scannerCornerTR} />
+                <View style={styles.scannerCornerBL} />
+                <View style={styles.scannerCornerBR} />
+              </View>
+              <Text style={styles.scannerHint}>Dashboard-dagi QR-kodni ko'rsating</Text>
+            </View>
+          </View>
+        </Modal>
+
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -190,6 +270,43 @@ const styles = StyleSheet.create({
   },
   form: {
     width: '100%',
+  },
+  qrBtn: {
+    backgroundColor: '#0F172A',
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    marginBottom: 24,
+  },
+  qrInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  qrText: {
+    color: '#F8FAFC',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#1E293B',
+  },
+  dividerText: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '700',
   },
   inputGroup: {
     marginBottom: 20,
@@ -260,5 +377,59 @@ const styles = StyleSheet.create({
     color: '#10B981',
     fontSize: 13,
     fontWeight: '700',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(2, 6, 23, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  scannerContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  scannerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scannerHeader: {
+    position: 'absolute',
+    top: 60,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  scannerTitle: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  closeBtn: {
+    position: 'absolute',
+    right: 24,
+    padding: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+  },
+  scannerFrame: {
+    width: 250,
+    height: 250,
+    position: 'relative',
+  },
+  scannerCornerTL: { position: 'absolute', top: 0, left: 0, width: 40, height: 40, borderTopWidth: 4, borderLeftWidth: 4, borderColor: '#10B981', borderTopLeftRadius: 20 },
+  scannerCornerTR: { position: 'absolute', top: 0, right: 0, width: 40, height: 40, borderTopWidth: 4, borderRightWidth: 4, borderColor: '#10B981', borderTopRightRadius: 20 },
+  scannerCornerBL: { position: 'absolute', bottom: 0, left: 0, width: 40, height: 40, borderBottomWidth: 4, borderLeftWidth: 4, borderColor: '#10B981', borderBottomLeftRadius: 20 },
+  scannerCornerBR: { position: 'absolute', bottom: 0, right: 0, width: 40, height: 40, borderBottomWidth: 4, borderRightWidth: 4, borderColor: '#10B981', borderBottomRightRadius: 20 },
+  scannerHint: {
+    color: '#94A3B8',
+    marginTop: 40,
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

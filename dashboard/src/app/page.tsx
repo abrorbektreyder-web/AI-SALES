@@ -162,8 +162,8 @@ export default function LandingChorusStyle() {
                               required 
                               value={name}
                               onChange={e => setName(e.target.value)}
-                              placeholder="Ism va sharif" 
-                              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" 
+                              placeholder="F.I.SH (Ism va sharif)" 
+                              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all font-medium" 
                             />
                           </div>
                           <div className="relative">
@@ -181,19 +181,6 @@ export default function LandingChorusStyle() {
                           </div>
                           <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                              <Mail className="h-4 w-4 text-white/30" />
-                            </div>
-                            <input 
-                              type="email" 
-                              required 
-                              value={email}
-                              onChange={e => setEmail(e.target.value)}
-                              placeholder="Elektron pochta" 
-                              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" 
-                            />
-                          </div>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                               <PhoneCall className="h-4 w-4 text-white/30" />
                             </div>
                             <input 
@@ -201,8 +188,20 @@ export default function LandingChorusStyle() {
                               required 
                               value={phone}
                               onChange={e => setPhone(e.target.value)}
-                              placeholder="998901234567" 
+                              placeholder="Telefon raqami (Asosiy login)" 
                               className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all font-mono" 
+                            />
+                          </div>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                              <Mail className="h-4 w-4 text-white/30" />
+                            </div>
+                            <input 
+                              type="email" 
+                              value={email}
+                              onChange={e => setEmail(e.target.value)}
+                              placeholder="Elektron pochta (Ixtiyoriy)" 
+                              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" 
                             />
                           </div>
                           <div className="relative">
@@ -214,10 +213,10 @@ export default function LandingChorusStyle() {
                               required 
                               value={password}
                               onChange={e => setPassword(e.target.value)}
-                              placeholder="Maxfiy parol" 
+                              placeholder="Maxfiy parol (Login uchun)" 
                               className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#00a6fb] focus:ring-2 focus:ring-[#00a6fb]/20 transition-all" 
                             />
-                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors">
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors focus:outline-none">
                               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                           </div>

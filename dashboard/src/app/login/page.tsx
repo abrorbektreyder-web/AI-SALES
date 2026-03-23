@@ -130,7 +130,7 @@ export default function LoginROP() {
             </div>
 
             <div className="flex justify-end pt-0.5">
-               <Link href="#" className="text-xs sm:text-sm text-slate-400 hover:text-white transition-colors">
+               <Link href="/forgot-password" className="text-xs sm:text-sm text-slate-400 hover:text-white transition-colors">
                   Parolni unutdingizmi?
                </Link>
             </div>

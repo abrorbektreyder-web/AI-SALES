@@ -13,6 +13,8 @@ export default function RegisterROP() {
   const [errorMsg, setErrorMsg] = useState('');
 
   const [formName, setFormName] = useState('');
+  const [formCompany, setFormCompany] = useState('');
+  const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formPassword, setFormPassword] = useState('');
 
@@ -27,6 +29,8 @@ export default function RegisterROP() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formName,
+          company: formCompany,
+          email: formEmail,
           phone: formPhone,
           password: formPassword,
           role: 'ROP'
@@ -82,7 +86,7 @@ export default function RegisterROP() {
               Ro'yxatdan o'tish
             </h1>
             <p className="text-slate-500 text-[10px] sm:text-xs">
-              AI Sales Pilot tizimiga qoshiling
+              AI Sales Pilot tizimiga qo'shiling
             </p>
           </div>
 
@@ -108,18 +112,47 @@ export default function RegisterROP() {
               />
             </div>
 
+             {/* Company Input */}
+             <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+              </div>
+              <input
+                type="text"
+                required
+                value={formCompany}
+                onChange={e => setFormCompany(e.target.value)}
+                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 sm:py-3 pl-10 sm:pl-11 pr-4 text-sm sm:text-base text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-medium"
+                placeholder="Kompaniya nomi"
+              />
+            </div>
+
             {/* Phone Input */}
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <PhoneCall className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
               </div>
               <input
-                type="text"
+                type="tel"
                 required
                 value={formPhone}
                 onChange={e => setFormPhone(e.target.value)}
+                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 sm:py-3 pl-10 sm:pl-11 pr-4 text-sm sm:text-base text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-medium font-mono"
+                placeholder="Telefon raqami (Asosiy login)"
+              />
+            </div>
+
+            {/* Email Input */}
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+              </div>
+              <input
+                type="email"
+                value={formEmail}
+                onChange={e => setFormEmail(e.target.value)}
                 className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 sm:py-3 pl-10 sm:pl-11 pr-4 text-sm sm:text-base text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-medium"
-                placeholder="Telefon raqam (masalan: 998901234567)"
+                placeholder="Elektron pochta (Ixtiyoriy)"
               />
             </div>
 
@@ -134,7 +167,7 @@ export default function RegisterROP() {
                 value={formPassword}
                 onChange={e => setFormPassword(e.target.value)}
                 className="w-full bg-slate-950/50 border border-slate-800 rounded-xl py-2.5 sm:py-3 pl-10 sm:pl-11 pr-12 text-sm sm:text-base text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-medium"
-                placeholder="Yangi parol"
+                placeholder="Maxfiy parol (Login uchun)"
               />
               <button
                 type="button"
