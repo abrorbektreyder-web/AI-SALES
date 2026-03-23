@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, SafeAreaView, KeyboardAvoidingView, Platform, StatusBar, Modal, ActivityIndicator } from 'react-native';
 import { Lock, User, Eye, EyeOff, ShieldCheck, ArrowRight, QrCode, X } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -17,6 +17,9 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isQRScannerVisible, setIsQRScannerVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+  
+  // QR kodning ikki marta skanerlanishining oldini olish uchun lock
+  const scannedRef = useRef(false);
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -35,6 +38,7 @@ export default function LoginScreen() {
       await saveAuthSession(token, user);
       router.replace('/(tabs)');
     } catch (error: any) {
+      console.error('[Login Error]', JSON.stringify(error.response?.data || error.message));
       const errorMsg = error.response?.data?.error || "Login xatosi. Ma'lumotlarni tekshiring.";
       alert(errorMsg);
     } finally {
@@ -43,22 +47,35 @@ export default function LoginScreen() {
   };
 
   const handleQRCodeScanned = async ({ data }: { data: string }) => {
+    // Agar allaqachon skanerlanayotgan bo'lsa, takrorlashning oldini olish
+    if (scannedRef.current) return;
+    scannedRef.current = true;
+    
     setIsQRScannerVisible(false);
     setIsLoading(true);
+    
+    console.log('[QR Scan] Token received:', data?.substring(0, 10) + '...');
+    console.log('[QR Scan] Sending to:', `${API_URL}/auth/qr-login`);
     
     try {
       const response = await axios.post(`${API_URL}/auth/qr-login`, {
         token: data,
       });
 
+      console.log('[QR Scan] Success:', JSON.stringify(response.data));
       const { token, user } = response.data;
       await saveAuthSession(token, user);
       router.replace('/(tabs)');
     } catch (error: any) {
+      console.error('[QR Scan Error] Status:', error.response?.status);
+      console.error('[QR Scan Error] Data:', JSON.stringify(error.response?.data));
+      console.error('[QR Scan Error] Message:', error.message);
       const errorMsg = error.response?.data?.error || "QR-kod haqiqiy emas yoki muddati o'tgan.";
       alert(errorMsg);
     } finally {
       setIsLoading(false);
+      // 3 soniyadan keyin lockni oching — agar xato bo'lsa qayta skanerlash mumkin
+      setTimeout(() => { scannedRef.current = false; }, 3000);
     }
   };
 
@@ -80,6 +97,7 @@ export default function LoginScreen() {
         return;
       }
     }
+    scannedRef.current = false; // Lockni tozalash
     setIsQRScannerVisible(true);
   };
 
@@ -90,7 +108,7 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         style={styles.keyboardView}
       >
-        <Animated.View entering={FadeInUp.duration(800).delay(100)} style={styles.header}>
+        <View style={styles.header}>
           <View style={styles.logoContainer}>
             <View style={styles.logoBadge}>
                <ShieldCheck color="#FFFFFF" size={32} />
@@ -98,9 +116,9 @@ export default function LoginScreen() {
           </View>
           <Text style={styles.title}>AI SALES PILOT</Text>
           <Text style={styles.subtitle}>Sotuvchilar premium portali</Text>
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={FadeInDown.duration(800).delay(300)} style={styles.form}>
+        <View style={styles.form}>
           
           <Pressable 
             style={styles.qrBtn}
@@ -109,7 +127,7 @@ export default function LoginScreen() {
             <View style={styles.qrInner}>
               <QrCode color="#10B981" size={24} />
               <Text style={styles.qrText}>QR-kod orqali kirish</Text>
-            </div>
+            </View>
             <ArrowRight color="#334155" size={16} />
           </Pressable>
 
@@ -178,7 +196,7 @@ export default function LoginScreen() {
             </Pressable>
           </View>
 
-        </Animated.View>
+        </View>
 
         {/* LOADING OVERLAY */}
         {isLoading && (

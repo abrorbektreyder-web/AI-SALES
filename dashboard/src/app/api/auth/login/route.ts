@@ -12,6 +12,23 @@ const loginSchema = z.object({
   password: z.string().min(1, "Parol kiriting"),
 });
 
+// CORS headerlarini qo'shish uchun yordamchi funksiya
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+}
+
+// CORS preflight uchun OPTIONS handler
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders(),
+  });
+}
+
 // POST /api/auth/login — Tizimga kirish
 export async function POST(req: NextRequest) {
   try {
@@ -26,7 +43,7 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { error: "Telefon raqam yoki parol noto'g'ri" },
-        { status: 401 }
+        { status: 401, headers: corsHeaders() }
       );
     }
 
@@ -36,7 +53,7 @@ export async function POST(req: NextRequest) {
     if (!passwordValid) {
       return NextResponse.json(
         { error: "Telefon raqam yoki parol noto'g'ri" },
-        { status: 401 }
+        { status: 401, headers: corsHeaders() }
       );
     }
 
@@ -57,12 +74,12 @@ export async function POST(req: NextRequest) {
         phone: user.phone,
         role: user.role,
       },
-    });
+    }, { headers: corsHeaders() });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Noto'g'ri ma'lumot", details: error.issues },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       );
     }
     console.error(`[Login Critical Error] Full Error:`, error);
@@ -71,7 +88,7 @@ export async function POST(req: NextRequest) {
         error: "Server ichki xatosi", 
         details: error.message || String(error)
       },
-      { status: 500 }
+      { status: 500, headers: corsHeaders() }
     );
   }
 }
