@@ -7,6 +7,7 @@ import {
   Trash2, Edit3, X, Eye, EyeOff, Copy, Check, RefreshCw,
   PhoneIncoming, Shield
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Agent {
   id: string;
@@ -324,7 +325,7 @@ export default function AgentsPage() {
             Yuklanmoqda...
           </div>
         ) : filteredAgents.length === 0 ? (
-          <div className="text-center py-20">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
             <Users className="size-12 text-white/10 mx-auto mb-4" />
             <p className="text-white/40 text-sm">
               {searchQuery ? "Hech qanday natija topilmadi" : "Hali sotuvchilar qo'shilmagan"}
@@ -337,16 +338,25 @@ export default function AgentsPage() {
                 + Birinchi sotuvchini qo&apos;shing
               </button>
             )}
-          </div>
+          </motion.div>
         ) : (
-          filteredAgents.map((agent) => {
-            const initials = agent.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-            const colors = ['bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-orange-500', 'bg-cyan-500', 'bg-pink-500'];
-            const color = colors[agent.id.charCodeAt(0) % colors.length];
+          <motion.div
+             initial="hidden"
+             animate="show"
+             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
+          >
+            {filteredAgents.map((agent) => {
+              const initials = agent.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+              const colors = ['bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-orange-500', 'bg-cyan-500', 'bg-pink-500'];
+              const color = colors[agent.id.charCodeAt(0) % colors.length];
 
-            return (
-              <div key={agent.id} className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors items-center">
-                {/* Name */}
+              return (
+                <motion.div 
+                  key={agent.id} 
+                  variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+                  className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-white/5 last:border-0 hover:bg-white/[0.04] transition-all items-center group"
+                >
+                  {/* Name */}
                 <div className="col-span-4 flex items-center gap-3">
                   <div className={`size-10 rounded-full flex items-center justify-center text-xs font-bold text-white ${color} shrink-0`}>
                     {initials}
@@ -405,16 +415,22 @@ export default function AgentsPage() {
                     <Trash2 className="size-4" />
                   </button>
                 </div>
-              </div>
+              </motion.div>
             );
-          })
+          })}
+          </motion.div>
         )}
       </div>
 
       {/* ===== ADD AGENT MODAL ===== */}
+      <AnimatePresence>
       {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
-          <div className="bg-[#1c1c1e] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <motion.div 
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
+          <motion.div 
+            initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0 }}
+            className="bg-[#1c1c1e] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-white/5">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <UserPlus className="size-5 text-emerald-400" />
@@ -502,14 +518,16 @@ export default function AgentsPage() {
                 {submitting ? 'Saqlanmoqda...' : "Sotuvchini qo'shish"}
               </button>
             </form>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* ===== EDIT AGENT MODAL ===== */}
+      <AnimatePresence>
       {showEditModal && selectedAgent && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowEditModal(false)}>
-          <div className="bg-[#1c1c1e] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowEditModal(false)}>
+          <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-[#1c1c1e] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-white/5">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Edit3 className="size-5 text-blue-400" />
@@ -586,14 +604,16 @@ export default function AgentsPage() {
                 {submitting ? 'Saqlanmoqda...' : "Saqlash"}
               </button>
             </form>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* ===== DELETE CONFIRM MODAL ===== */}
+      <AnimatePresence>
       {showDeleteModal && selectedAgent && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowDeleteModal(false)}>
-          <div className="bg-[#1c1c1e] border border-rose-500/20 rounded-2xl w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowDeleteModal(false)}>
+          <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-[#1c1c1e] border border-rose-500/20 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 text-center">
               <div className="size-14 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-4">
                 <Trash2 className="size-7 text-rose-400" />
@@ -621,9 +641,10 @@ export default function AgentsPage() {
                 {submitting ? "O'chirilmoqda..." : "Ha, o'chirish"}
               </button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }
