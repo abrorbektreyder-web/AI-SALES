@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, SafeAreaView, Linking } from 'react-native';
 import { Phone, Delete } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
@@ -65,6 +66,7 @@ const AnimatedButton = ({ onPress, children, style, onLongPress }: AnimatedButto
 
 export default function DialerScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
+  const router = useRouter();
 
   const handlePressNumber = (num: string) => {
     if (phoneNumber.length < 15) {
@@ -85,17 +87,12 @@ export default function DialerScreen() {
     if (!phoneNumber) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     
-    // Asl SIM-karta orqali real qo'ng'iroqqa o'tkazish
-    const telUrl = `tel:${phoneNumber}`;
-    Linking.canOpenURL(telUrl)
-      .then((supported) => {
-        if (supported) {
-          Linking.openURL(telUrl);
-        } else {
-          console.error("Telefon qilish qismi ushbu qurilmada bloklangan yoki mavjud emas");
-        }
-      })
-      .catch((err) => console.error("Telefon xatosi:", err));
+    // Native oynaga (SIM) o'tkazish bekor qilindi.
+    // Ilova ichidagi maxsus Call (Qong'iroq) oynasiga o'tamiz.
+    router.push({
+      pathname: "/call",
+      params: { number: phoneNumber }
+    });
   };
 
   const DialButton = ({ num, letters, onLongPress }: { num: string; letters: string; onLongPress?: () => void }) => (

@@ -55,23 +55,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Upload papkasini yaratish
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "audio");
+    // Vercel'da /tmp papkasi yozishga ruxsat berilgan yagona papka
+    // (public/uploads Vercel serverless'da read-only bo'ladi)
+    const uploadsDir = '/tmp/audio';
     await mkdir(uploadsDir, { recursive: true });
 
-    // Fayl nomini yaratish (uuid + vaqt)
-    const ext = file.name.split(".").pop() || "mp3";
+    // Fayl nomini yaratish (userId + vaqt)
+    const ext = file.name.split(".").pop() || "m4a";
     const fileName = `${payload.userId}_${Date.now()}.${ext}`;
     const filePath = path.join(uploadsDir, fileName);
 
-    // Faylni yozish
+    // Faylni /tmp ga yozish
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    // URL yaratish (local uchun)
-    // TODO: Production da S3 URL ga o'zgartiriladi
-    const audioUrl = `/uploads/audio/${fileName}`;
+    // URL: hozircha /tmp manzili (keyinchalik S3/Supabase Storage ga o'tkaziladi)
+    const audioUrl = `/tmp/audio/${fileName}`;
 
     // Bazaga yozish
     const callRecord = await prisma.callRecord.create({

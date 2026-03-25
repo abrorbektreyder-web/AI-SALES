@@ -14,7 +14,7 @@ import httpx
 import psycopg2
 from openai import OpenAI
 
-from config import OPENAI_API_KEY, DATABASE_URL, DASHBOARD_URL
+from config import GROQ_API_KEY, DATABASE_URL, DASHBOARD_URL
 
 app = FastAPI(
     title="AI Sales Pilot — Engine",
@@ -35,7 +35,7 @@ app.add_middleware(
 )
 
 # OpenAI client
-client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+client = OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1") if GROQ_API_KEY else None
 
 # Thread pool — sync OpenAI SDK chaqiruvlari uchun
 _executor = ThreadPoolExecutor(max_workers=4)
@@ -119,7 +119,7 @@ def update_analysis_in_db(call_id: str, score: int, summary: str, transcript: st
 async def transcribe_audio(audio_url: str) -> str:
     """Audio faylni matnga aylantirish (OpenAI Whisper)"""
     if not client:
-        raise HTTPException(status_code=500, detail="OpenAI API kaliti sozlanmagan")
+        raise HTTPException(status_code=500, detail="Groq API kaliti sozlanmagan")
     
     # Audio faylni yuklab olish
     async with httpx.AsyncClient() as http_client:
@@ -143,7 +143,7 @@ async def transcribe_audio(audio_url: str) -> str:
         def _transcribe() -> str:
             with open(temp_path, "rb") as audio_file:
                 result = openai_client.audio.transcriptions.create(
-                    model="whisper-1",
+                    model="whisper-large-v3-turbo",
                     file=audio_file,
                     language="uz",  # O'zbek tili
                     response_format="text"
@@ -189,14 +189,14 @@ TAVSIYA: [matn]
 async def analyze_with_llm(transcript: str) -> tuple[int, str, str]:
     """LLM yordamida suhbatni tahlil qilish"""
     if not client:
-        raise HTTPException(status_code=500, detail="OpenAI API kaliti sozlanmagan")
+        raise HTTPException(status_code=500, detail="Groq API kaliti sozlanmagan")
     
     openai_client = client  # local reference for thread safety
     assert openai_client is not None
     
     def _analyze() -> str:
         resp = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": ANALYSIS_PROMPT},
                 {"role": "user", "content": f"Suhbat matni:\n\n{transcript}"}
@@ -240,7 +240,7 @@ async def health_check():
     return {
         "status": "ok",
         "engine": "AI Sales Pilot",
-        "openai_configured": bool(OPENAI_API_KEY),
+        "groq_configured": bool(GROQ_API_KEY),
         "database_configured": bool(DATABASE_URL)
     }
 

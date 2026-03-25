@@ -3,8 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# OpenAI API kaliti
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+# Groq API kaliti
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
 # Database URL (Prisma bilan bitta baza)
 DATABASE_URL = os.getenv("DATABASE_URL", "")
