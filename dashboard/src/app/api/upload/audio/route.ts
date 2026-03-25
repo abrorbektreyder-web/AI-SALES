@@ -96,19 +96,23 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // AI Engine (FastAPI) serveriga signal yuborish — fonda tahlil boshlash
-    const AI_ENGINE_URL = process.env.AI_ENGINE_URL || "http://localhost:8001";
+    // AI Engine (FastAPI -> Next.js local analyze API ga o'tkazildi)
+    // Tahlil Vercel Serverless ichida tez bajarilishi uchun qisqa kutamiz (await)
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+    const proto = req.headers.get("x-forwarded-proto") || "https";
+    const appUrl = `${proto}://${host}`;
+    
     try {
-      fetch(`${AI_ENGINE_URL}/api/analyze`, {
+      await fetch(`${appUrl}/api/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           callId: callRecord.id,
           audioUrl: audioUrl,
         }),
-      }).catch(err => console.error("AI Engine ga signal yuborishda xato:", err));
+      });
     } catch (e) {
-      console.error("AI Engine ulanishda xato:", e);
+      console.error("AI Tahlil xatosi:", e);
     }
 
     return NextResponse.json(
