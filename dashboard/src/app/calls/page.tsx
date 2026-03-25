@@ -393,15 +393,18 @@ function AudioPlayerModalContent({ call }: { call: any }) {
           {call.aiSummary}
         </p>
 
-        {call.score < 4 && (
+        {call.score < 4 && call.lesson && (
           <div className="mt-4 p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-start gap-3">
             <div className="size-7 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
                <span className="text-orange-400 font-bold text-sm">!</span>
             </div>
             <div>
-              <h4 className="text-sm font-bold text-orange-400">Tavsiya etilgan dars:</h4>
-              <p className="text-xs text-white/60 mt-1 mb-2 leading-tight">{call.score < 3 ? "\"E'tirozlarni yengish va agressiv mijoz bilan ishlash\"" : "\"Cross-sell: Qo'shimcha savdo sirlari\""} nomli videokursni xodimga zudlik bilan yuboring.</p>
-              <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white text-[10px] h-6 px-3">Xodim rejasiga qo&apos;shish</Button>
+              <h4 className="text-sm font-bold text-orange-400">Tavsiya etilgan dars (AI orqali biriktirildi):</h4>
+              <p className="text-xs text-white/60 mt-1 mb-2 leading-tight">"{call.lesson.title}" nomli videokurs.</p>
+              <div className="flex items-center gap-2 mt-2">
+                 <Button disabled size="sm" className="bg-green-600/30 text-green-400 text-[10px] h-6 px-3">Mobil Ilovada xodimga yuborildi ✅</Button>
+                 <a href={call.lesson.url} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 underline hover:text-blue-300">Darsni ko'rish (YouTube)</a>
+              </div>
             </div>
           </div>
         )}
