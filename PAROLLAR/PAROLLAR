@@ -1,3 +1,0 @@
-DATABASE_PASSWORD: abrorjon01031984
-DATABASE_URL (Pooler): postgresql://postgres.dlcplppycmlqatqpozqk:abrorjon01031984@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true
-JWT_SECRET: ai-sales-pilot-jwt-secret-2026-change-in-production

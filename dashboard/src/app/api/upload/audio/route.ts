@@ -3,10 +3,9 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { supabaseAdmin } from "@/lib/supabase";
 
-// POST /api/upload/audio — Audio faylni yuklash
+// POST /api/upload/audio — Audio faylni yuklash (Supabase Storage)
 export async function POST(req: NextRequest) {
   try {
     // Token tekshirish
@@ -55,23 +54,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Vercel'da /tmp papkasi yozishga ruxsat berilgan yagona papka
-    // (public/uploads Vercel serverless'da read-only bo'ladi)
-    const uploadsDir = '/tmp/audio';
-    await mkdir(uploadsDir, { recursive: true });
-
     // Fayl nomini yaratish (userId + vaqt)
     const ext = file.name.split(".").pop() || "m4a";
     const fileName = `${payload.userId}_${Date.now()}.${ext}`;
-    const filePath = path.join(uploadsDir, fileName);
+    const storagePath = `calls/${fileName}`;
 
-    // Faylni /tmp ga yozish
+    // Faylni Supabase Storage ga yuklash
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
 
-    // URL: hozircha /tmp manzili (keyinchalik S3/Supabase Storage ga o'tkaziladi)
-    const audioUrl = `/tmp/audio/${fileName}`;
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("audio-records")
+      .upload(storagePath, buffer, {
+        contentType: file.type || "audio/m4a",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("Supabase Storage xatosi:", uploadError);
+      return NextResponse.json(
+        { error: "Audio faylni saqlashda xatolik: " + uploadError.message },
+        { status: 500 }
+      );
+    }
+
+    // Public URL olish
+    const { data: urlData } = supabaseAdmin.storage
+      .from("audio-records")
+      .getPublicUrl(storagePath);
+
+    const audioUrl = urlData.publicUrl;
 
     // Bazaga yozish
     const callRecord = await prisma.callRecord.create({
@@ -92,7 +104,7 @@ export async function POST(req: NextRequest) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           callId: callRecord.id,
-          audioUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}${audioUrl}`
+          audioUrl: audioUrl,
         }),
       }).catch(err => console.error("AI Engine ga signal yuborishda xato:", err));
     } catch (e) {
