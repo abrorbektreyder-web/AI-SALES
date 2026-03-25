@@ -14,12 +14,14 @@
 - [x] **8. Push Notifications:** AI tahlil tugagach agent ilovasiga xabar boradi.
 - [x] **9. QR Login:** Agent mobil ilovaga QR kod orqali kiradi.
 - [x] **10. Darslar bazasi:** AI tavsiya qiladigan darslar bazaga seed qilindi.
-- [x] **11. SIP Integratsiya (Mobil):** Zadarma (`510156`) SIP client mobil ilovaga ulandi (`sipClient.ts`).
-- [ ] **12. Yangi APK Build:** SIP/WebRTC o'zgarishlari uchun yangi `eas build -p android` qilish.
+- [x] **11. SIP Integratsiya (Mobil):** Zadarma (`510156`) SIP client mobil ilovaga ulandi (`sipClient.ts`), `call.tsx` ga bog'landi, hangUp ham ulandi.
+- [ ] **12. ⚠️ Yangi APK Build (MUHIM):** `react-native-webrtc` native modul — Expo Go da ishlamaydi. `eas build -p android --profile preview` bilan yangi APK build qilish shart!
 
 ---
 
 ## 🔄 FAZA 2 — Browser Dialer / Kompdan Qo'ng'iroq (2-3 kun)
+
+> **📌 Qaror: Zadarma ishlatiladi** (Binotel emas). Sabab: WebRTC brauzer qo'llab-quvvatlash tayyor (`wss://webrtc.zadarma.com`), hozirgi kod allaqachon Zadarma `510156` ga ulangan, API hujjatlari mukammal. Binotel asosan Rossiya/Ukraina bozori uchun, WebRTC cheklangan.
 
 - [ ] **1. Zadarma WebRTC (Brauzer):** Dashboard'ga brauzer uchun `sip.js` + WebRTC Softphone integratsiyasi.
 - [ ] **2. Browser Dialer UI:** Dashboard ichiga chiroyli telefon klaviaturasi qo'shish (Sotuvchi kompdan qo'ng'iroq qiladi).
