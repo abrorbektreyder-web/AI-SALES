@@ -40,7 +40,14 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "react-native-webrtc",
+        {
+          "cameraPermission": "Allow AI SALES PILOT to access your camera for video calls",
+          "microphonePermission": "Allow AI SALES PILOT to access your microphone to record audio during calls"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,

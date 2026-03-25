@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { Audio } from 'expo-av';
 import * as SecureStore from 'expo-secure-store';
+import { sipClient } from '../lib/sipClient';
 
 export default function CallScreen() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function CallScreen() {
   const [callDuration, setCallDuration] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [callStatus, setCallStatus] = useState('DIALING...'); // 'DIALING...', 'CONNECTED'
 
   // Animatsiyalar uchun qadriyatlar
   const pulseScale = useSharedValue(1);
@@ -21,30 +23,47 @@ export default function CallScreen() {
   const avatarOpacity = useSharedValue(0);
 
   useEffect(() => {
-    // Ekran ochilganda "Gudok" yoki "Qo'ng'iroq" animatsiyasini boshlash
+    // Ekran ochilganda "Gudok" animatsiyasini boshlash
     avatarScale.value = withSpring(1);
     avatarOpacity.value = withTiming(1, { duration: 500 });
-    
     pulseScale.value = withRepeat(
-      withSequence(
-        withTiming(1.2, { duration: 1000 }),
-        withTiming(1, { duration: 1000 })
-      ),
-      -1,
-      true
+      withSequence(withTiming(1.2, { duration: 1000 }), withTiming(1, { duration: 1000 })),
+      -1, true
     );
 
-    // Qo'ng'iroq vaqtini hisoblash
-    const timer = setInterval(() => {
-      setCallDuration((prev) => prev + 1);
-    }, 1000);
+    let timer: any;
+    
+    // WebRTC SIP orqali internet-qong'iroq qilamiz
+    sipClient.initialize(
+      () => {
+        // Disconnect
+        stopRecordingAndUpload(true);
+        router.back();
+      },
+      () => {
+      }
+    );
 
-    // Mikrofon ruxsatini sorash va yozishni boshlash (AI Tahlilni sinash oson bo'lishi uchun)
-    startRecording();
+    sipClient.makeCall(
+      (number as string), 
+      () => {
+        // Answered callback
+        setCallStatus('CONNECTED');
+        startRecording(); // Ovozni yozishni gaplashuv boshlanganda yoqamiz
+        timer = setInterval(() => {
+          setCallDuration((prev) => prev + 1);
+        }, 1000);
+      },
+      () => {
+        // Ended callback
+        handleHangUp();
+      }
+    );
 
     return () => {
       clearInterval(timer);
-      stopRecordingAndUpload(false); // agar oyna yopilsa, recording to'xtatilishi kerak (lekin ba'zan yuklanmaydi)
+      sipClient.dispose();
+      if (recording) stopRecordingAndUpload(false);
     };
   }, []);
 
@@ -149,6 +168,7 @@ export default function CallScreen() {
 
   const handleHangUp = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    sipClient.hangUp();
     stopRecordingAndUpload(true); // Qong'iroq tugatildi -> serverga jo'nat
     router.back();
   };
