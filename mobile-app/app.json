@@ -11,6 +11,12 @@
       "supportsTablet": true
     },
     "android": {
+      "permissions": [
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
       "package": "com.abrorsmart.aisalespilot",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",

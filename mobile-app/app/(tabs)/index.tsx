@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, Pressable, SafeAreaView, Linking } from 'react-
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeInUp } from 'react-native-reanimated';
+import * as SecureStore from 'expo-secure-store';
 
 type AnimatedButtonProps = {
   onPress: () => void;
@@ -36,7 +37,7 @@ const AnimatedButton = ({ onPress, children, style, onLongPress }: AnimatedButto
   const handlePress = () => {
     if (longPressedRef.current) {
       longPressedRef.current = false;
-      return; // Long press allaqachon ishladi — onPress ni o'tkazib yuboramiz
+      return; 
     }
     onPress();
   };
@@ -87,12 +88,21 @@ export default function DialerScreen() {
     if (!phoneNumber) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     
-    // Native oynaga (SIM) o'tkazish bekor qilindi.
-    // Ilova ichidagi maxsus Call (Qong'iroq) oynasiga o'tamiz.
     router.push({
       pathname: "/call",
       params: { number: phoneNumber }
     });
+  };
+
+  const handleLogout = async () => {
+    try {
+      await SecureStore.deleteItemAsync('auth_token');
+      await SecureStore.deleteItemAsync('user_data');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace('/(auth)/login');
+    } catch (e) {
+      console.error("Logout error", e);
+    }
   };
 
   const DialButton = ({ num, letters, onLongPress }: { num: string; letters: string; onLongPress?: () => void }) => (
@@ -107,7 +117,6 @@ export default function DialerScreen() {
   );
 
   const handleLongPressZero = () => {
-    // 0 ni bosib tursa — + yoziladi (onPress ishlamaydi, ref bilan bloklangan)
     if (phoneNumber.length < 15) {
       setPhoneNumber((prev) => prev + '+');
     }
@@ -116,6 +125,15 @@ export default function DialerScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Logout Header */}
+      <Animated.View entering={FadeInUp.duration(500)} style={styles.header}>
+        <View />
+        <Pressable onPress={handleLogout} style={styles.logoutBtn}>
+          <Ionicons name="log-out-outline" color="#94A3B8" size={24} />
+          <Text style={{color: '#94A3B8', fontSize: 12, marginLeft: 4}}>Chiqish</Text>
+        </Pressable>
+      </Animated.View>
+
       <View style={styles.displayContainer}>
         <Text
           style={[
@@ -181,9 +199,23 @@ export default function DialerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A', // Slate 900
+    backgroundColor: '#0F172A',
     justifyContent: 'flex-end',
     paddingBottom: 40,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    alignItems: 'center',
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#1E293B',
+    borderRadius: 12,
   },
   displayContainer: {
     flex: 1,
@@ -211,17 +243,17 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#1E293B', // Slate 800
+    backgroundColor: '#1E293B',
     justifyContent: 'center',
     alignItems: 'center',
   },
   dialNumber: {
-    color: '#F8FAFC', // Slate 50
+    color: '#F8FAFC',
     fontSize: 28,
     fontWeight: '400',
   },
   dialLetters: {
-    color: '#64748B', // Slate 500
+    color: '#64748B',
     fontSize: 10,
     fontWeight: '600',
     marginTop: 2,
@@ -230,7 +262,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#10B981', // Emerald 500
+    backgroundColor: '#10B981',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#10B981',
