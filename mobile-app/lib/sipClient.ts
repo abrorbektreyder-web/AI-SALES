@@ -16,7 +16,7 @@ export class SipClient {
     this.onCallAnswered = onCallAnswered;
 
     const sipUri = `sip:510156@sip.zadarma.com`;
-    const wssUrl = 'wss://webrtc.zadarma.com:8443'; 
+    const wssUrl = 'wss://webrtc.zadarma.com'; 
     
     if (this.userAgent) return; // Allaqachon yaratilgan bo'lsa
 
@@ -53,9 +53,19 @@ export class SipClient {
     if (!this.userAgent) return;
     this.registerer = new Registerer(this.userAgent);
     this.registerer.register()
-      .then(() => console.log('[SIP] Registered successfully'))
+      .then(() => {
+        console.log('[SIP] Registered successfully');
+        // Register bo'lganini bilish uchun event jo'natishimiz ham mumkin
+      })
       .catch(e => console.error('[SIP] Registration error', e));
   }
+
+  // Ro'yxatdan o'tishni kutish uchun yordamchi funksiya
+  public async isRegistered(): Promise<boolean> {
+    if (!this.registerer) return false;
+    return this.registerer.state === 'Registered';
+  }
+
 
   public async makeCall(targetNumber: string, onCallAnswered: () => void, onCallEnd: () => void) {
     if (!this.userAgent) {
@@ -76,11 +86,16 @@ export class SipClient {
 
     this.currentSession = new Inviter(this.userAgent, targetUri, {
       sessionDescriptionHandlerOptions: {
-        constraints: { audio: true, video: false }
-      }
+        constraints: { audio: true, video: false },
+        peerConnectionConfiguration: {
+          iceServers: [{ urls: 'stun:stun.zadarma.com' }]
+        }
+      } as any
     });
 
+
     this.currentSession.stateChange.addListener((state: SessionState) => {
+
       console.log('[SIP STATE CHANGE]:', state);
       if (state === SessionState.Established) {
         onCallAnswered();

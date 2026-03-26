@@ -48,6 +48,12 @@
         }
       ]
     ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5c4d8f89-2fcc-4150-9eea-7f2a3dbd871b"
+    },
     "extra": {
       "router": {},
       "eas": {
@@ -60,3 +66,4 @@
     "appVersionSource": "local"
   }
 }
+

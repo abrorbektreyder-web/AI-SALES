@@ -15,7 +15,7 @@ export default function CallScreen() {
   
   const [callDuration, setCallDuration] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
-  const [callStatus, setCallStatus] = useState('DIALING...'); 
+  const [callStatus, setCallStatus] = useState('SOZLANMOQDA...'); 
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const recordingRef = useRef<Audio.Recording | null>(null);
@@ -47,8 +47,17 @@ export default function CallScreen() {
           return;
       }
 
+      // Audio-ni VOIP rejimiga o'tkazish
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false, // Dinamikda gaplashish uchun
+      });
+
       // 2. SIP-ni ishga tushirish
       console.log("[CALL] Initializing SIP...");
+
       await sipClient.initialize(
         () => {
           // Disconnect callback
@@ -61,14 +70,26 @@ export default function CallScreen() {
         }
       );
 
-      // 3. Qo'ng'iroqni boshlash
+      // 3. Register bo'lishini kutish (Zadarma qo'ng'iroqdan oldin ro'yxatdan o'tishni talab qiladi)
+      setCallStatus('RO\'YXATDAN O\'TILMOQDA...');
+      let attempts = 0;
+      while (attempts < 10 && !(await sipClient.isRegistered())) {
+          console.log("[CALL] Waiting for registration... attempt", attempts);
+          await new Promise(r => setTimeout(r, 1000));
+          attempts++;
+      }
+
+      // 4. Qo'ng'iroqni boshlash
       console.log("[CALL] Making call...");
+      setCallStatus('RAQAM TERILMOQDA...');
+
       sipClient.makeCall(
         (number as string), 
         () => {
           // Answered callback
           console.log("[CALL] Answered!");
           setCallStatus('CONNECTED');
+          Alert.alert("BOG'LANDI!", "Suhbat boshlandi, ovozingiz yozilyapti.");
           startRecording(); 
           timerRef.current = setInterval(() => {
             setCallDuration((prev) => {
@@ -79,6 +100,7 @@ export default function CallScreen() {
           }, 1000);
 
         },
+
         () => {
           // Ended callback
           console.log("[CALL] Ended");
@@ -147,11 +169,14 @@ export default function CallScreen() {
       const uri = rec.getURI();
       console.log('Recording stopped and saved at', uri);
 
-      if (shouldUpload && uri && durationRef.current > 2) {
-
-        // Audio faylni serverga yuklaymiz (API Tahlil uchun)
-        uploadAudio(uri);
+      if (shouldUpload && uri) {
+        // Hamma qo'ng'iroqlarni yuklash (testing uchun)
+        if (durationRef.current >= 0) {
+            console.log("[CALL] Uploading recording...");
+            uploadAudio(uri);
+        }
       }
+
     } catch (err) {
       console.error('Failed to stop recording', err);
     }
@@ -176,7 +201,8 @@ export default function CallScreen() {
         type: 'audio/m4a'
       } as any);
       formData.append('customerPhone', (number as string) || '+998900000000');
-      formData.append('durationSec', callDuration.toString());
+      formData.append('durationSec', durationRef.current.toString());
+
 
       console.log("Yuklanmoqda...", API_URL + '/api/upload/audio');
       
@@ -205,12 +231,14 @@ export default function CallScreen() {
     }
   };
 
-  const handleHangUp = () => {
+  const handleHangUp = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     sipClient.hangUp();
-    stopRecordingAndUpload(true); // Qong'iroq tugatildi -> serverga jo'nat
+    // Muhim: Navigatsiyadan OLDIN stopRecordingandUpload chaqiramiz (kutib kutmasligimiz ixtiyoriy lekin yozish to'xtashi shart)
+    await stopRecordingAndUpload(true); 
     router.back();
   };
+
 
   const animatedPulseStyle = useAnimatedStyle(() => {
     return {
@@ -230,7 +258,9 @@ export default function CallScreen() {
     <SafeAreaView style={styles.container}>
       {/* Yuqori qism - Foydalanuvchi info */}
       <View style={styles.topSection}>
+        <Text style={{ color: '#fff', fontSize: 16, marginBottom: 10 }}>{callStatus}</Text>
         <View style={styles.avatarWrapper}>
+
           <Animated.View style={[styles.pulseCircle, animatedPulseStyle]} />
           <Animated.View style={[styles.avatar, animatedAvatarStyle]}>
              <Text style={styles.avatarText}>{((number as string) || "Unknown").charAt(0) || "U"}</Text>
