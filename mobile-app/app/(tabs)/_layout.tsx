@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
-import { Phone, Star } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
@@ -78,7 +78,7 @@ export default function TabLayout() {
         options={{
           title: 'Dialer',
           tabBarIcon: ({ color, size }) => (
-            <Phone size={size} color={color} />
+             <Ionicons name="call" size={size} color={color} />
           ),
         }}
       />
@@ -87,7 +87,7 @@ export default function TabLayout() {
         options={{
           title: 'Reyting',
           tabBarIcon: ({ color, size }) => (
-            <Star size={size} color={color} />
+             <Ionicons name="star" size={size} color={color} />
           ),
         }}
       />

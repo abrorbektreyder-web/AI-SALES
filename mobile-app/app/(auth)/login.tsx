@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, SafeAreaView, KeyboardAvoidingView, Platform, StatusBar, Modal, ActivityIndicator } from 'react-native';
-import { Lock, User, Eye, EyeOff, ShieldCheck, ArrowRight, QrCode, X } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -111,7 +111,7 @@ export default function LoginScreen() {
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <View style={styles.logoBadge}>
-               <ShieldCheck color="#FFFFFF" size={32} />
+               <Ionicons name="shield-checkmark" color="#FFFFFF" size={32} />
             </View>
           </View>
           <Text style={styles.title}>AI SALES PILOT</Text>
@@ -125,10 +125,10 @@ export default function LoginScreen() {
             onPress={openQRScanner}
           >
             <View style={styles.qrInner}>
-              <QrCode color="#10B981" size={24} />
+               <Ionicons name="qr-code" color="#10B981" size={24} />
               <Text style={styles.qrText}>QR-kod orqali kirish</Text>
             </View>
-            <ArrowRight color="#334155" size={16} />
+             <Ionicons name="arrow-forward" color="#334155" size={16} />
           </Pressable>
 
           <View style={styles.divider}>
@@ -140,7 +140,7 @@ export default function LoginScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Telefon raqam (Login)</Text>
             <View style={styles.inputContainer}>
-              <User color="#94A3B8" size={18} style={styles.icon} />
+               <Ionicons name="person-outline" color="#94A3B8" size={18} style={styles.icon} />
               <TextInput
                 style={styles.input}
                 placeholder="+998901234567"
@@ -156,7 +156,7 @@ export default function LoginScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Maxfiy parol</Text>
             <View style={styles.inputContainer}>
-              <Lock color="#94A3B8" size={18} style={styles.icon} />
+               <Ionicons name="lock-closed-outline" color="#94A3B8" size={18} style={styles.icon} />
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
@@ -169,7 +169,7 @@ export default function LoginScreen() {
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeIcon}
               >
-                {showPassword ? <EyeOff color="#94A3B8" size={20} /> : <Eye color="#94A3B8" size={20} />}
+                 {showPassword ? <Ionicons name="eye-off-outline" color="#94A3B8" size={20} /> : <Ionicons name="eye-outline" color="#94A3B8" size={20} />}
               </Pressable>
             </View>
           </View>
@@ -186,7 +186,7 @@ export default function LoginScreen() {
             <Text style={styles.loginBtnText}>
               {isLoading ? "Kirilmoqda..." : "Tizimga kirish"}
             </Text>
-            {!isLoading && <ArrowRight color="#FFFFFF" size={20} style={{ marginLeft: 8 }} />}
+             {!isLoading && <Ionicons name="arrow-forward" color="#FFFFFF" size={20} style={{ marginLeft: 8 }} />}
           </Pressable>
 
           <View style={styles.footer}>
@@ -223,7 +223,7 @@ export default function LoginScreen() {
               <View style={styles.scannerHeader}>
                 <Text style={styles.scannerTitle}>Skanerlash</Text>
                 <Pressable onPress={() => setIsQRScannerVisible(false)} style={styles.closeBtn}>
-                  <X color="#FFFFFF" size={24} />
+                   <Ionicons name="close" color="#FFFFFF" size={24} />
                 </Pressable>
               </View>
               <View style={styles.scannerFrame}>

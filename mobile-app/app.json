@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "mobileapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -42,17 +41,13 @@
       ],
       "expo-secure-store",
       [
-        "react-native-webrtc",
+        "@config-plugins/react-native-webrtc",
         {
           "cameraPermission": "Allow AI SALES PILOT to access your camera for video calls",
           "microphonePermission": "Allow AI SALES PILOT to access your microphone to record audio during calls"
         }
       ]
     ],
-    "experiments": {
-      "typedRoutes": false,
-      "reactCompiler": true
-    },
     "extra": {
       "router": {},
       "eas": {
@@ -60,5 +55,8 @@
       }
     },
     "owner": "abror_smart"
+  },
+  "cli": {
+    "appVersionSource": "local"
   }
 }

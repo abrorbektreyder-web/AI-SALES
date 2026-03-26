@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, SafeAreaView, Linking } from 'react-native';
-import { Phone, Delete } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
@@ -158,7 +158,7 @@ export default function DialerScreen() {
             onPress={handleCall}
             style={styles.callButton}
           >
-            <Phone size={32} color="#FFFFFF" fill="#FFFFFF" />
+             <Ionicons name="call" size={32} color="#FFFFFF" />
           </AnimatedButton>
 
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -168,7 +168,7 @@ export default function DialerScreen() {
                 onLongPress={handleLongDelete}
                 style={styles.deleteButton}
               >
-                <Delete size={28} color="#94A3B8" />
+                 <Ionicons name="backspace-outline" size={28} color="#94A3B8" />
               </AnimatedButton>
             )}
           </View>

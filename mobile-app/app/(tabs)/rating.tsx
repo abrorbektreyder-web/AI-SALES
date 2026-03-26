@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Pressable, Platform } from 'react-native';
-import { Star, TrendingUp, AlertTriangle, PlayCircle, LogOut } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -76,7 +76,7 @@ export default function RatingScreen() {
             <Text style={styles.headerSubtitle}>So'nggi 30 kunlik natijalar</Text>
           </View>
           <Pressable onPress={handleLogout} style={styles.logoutBtn}>
-            <LogOut color="#EF4444" size={24} />
+            <Ionicons name="log-out-outline" color="#EF4444" size={24} />
           </Pressable>
         </Animated.View>
 
@@ -101,7 +101,7 @@ export default function RatingScreen() {
         {SCORE < 4 && lesson && (
           <Animated.View entering={FadeInUp.delay(400).duration(500)} style={styles.alertCard}>
             <View style={styles.alertHeader}>
-              <AlertTriangle color="#F87171" size={24} />
+              <Ionicons name="warning-outline" color="#F87171" size={24} />
               <Text style={styles.alertTitle}>Zudlik bilan darsni ko'ring!</Text>
             </View>
             <Text style={styles.alertBody}>
@@ -111,7 +111,7 @@ export default function RatingScreen() {
               style={styles.videoBtn}
               onPress={() => Linking.openURL(lesson.url)}
             >
-              <PlayCircle color="#FFF" size={20} />
+              <Ionicons name="play-circle-outline" color="#FFF" size={20} />
               <Text style={styles.videoBtnText}>Qutqaruv darsi: "{lesson.title}"</Text>
             </Pressable>
           </Animated.View>
@@ -124,7 +124,7 @@ export default function RatingScreen() {
           {calls.length > 0 ? calls.map((item, index) => (
             <View key={item.id || index} style={styles.callRow}>
               <View style={styles.callIconBox}>
-                <TrendingUp size={20} color="#94A3B8" />
+                <Ionicons name="trending-up" size={20} color="#94A3B8" />
               </View>
               <View style={styles.callInfo}>
                 <Text style={styles.callName}>Mijoz {item.customerPhone}</Text>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { PhoneOff, Mic } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { Audio } from 'expo-av';
@@ -202,7 +202,7 @@ export default function CallScreen() {
         <Text style={styles.numberText}>{number}</Text>
         
         <View style={styles.statusContainer}>
-          {isRecording && <Mic size={16} color="#EF4444" style={{marginRight: 6}}/>}
+           {isRecording && <Ionicons name="mic" size={16} color="#EF4444" style={{marginRight: 6}}/>}
           <Text style={styles.timeText}>{formatTime(callDuration)}</Text>
         </View>
         <Text style={styles.recordingText}>
@@ -214,7 +214,7 @@ export default function CallScreen() {
       <View style={styles.bottomSection}>
         <Animated.View style={styles.hangupWrapper}>
           <View onTouchEnd={handleHangUp} style={styles.hangupButton}>
-            <PhoneOff size={36} color="#FFFFFF" fill="#FFFFFF" />
+             <Ionicons name="call-outline" size={36} color="#FFFFFF" style={{ transform: [{ rotate: '135deg' }] }} />
           </View>
           <Text style={styles.hangupText}>Tugatish</Text>
         </Animated.View>
