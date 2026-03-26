@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+
 import { View, Text, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,8 +15,13 @@ export default function CallScreen() {
   
   const [callDuration, setCallDuration] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [callStatus, setCallStatus] = useState('DIALING...'); // 'DIALING...', 'CONNECTED'
+  const [callStatus, setCallStatus] = useState('DIALING...'); 
+  
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingRef = useRef<Audio.Recording | null>(null);
+  const durationRef = useRef(0);
+
+
 
   // Animatsiyalar uchun qadriyatlar
   const pulseScale = useSharedValue(1);
@@ -31,41 +37,70 @@ export default function CallScreen() {
       -1, true
     );
 
-    let timer: any;
-    
-    // WebRTC SIP orqali internet-qong'iroq qilamiz
-    sipClient.initialize(
-      () => {
-        // Disconnect
-        stopRecordingAndUpload(true);
-        router.back();
-      },
-      () => {
+    const initCall = async () => {
+      // 1. Mikrofon ruxsatini oldindan so'rash (WebRTC session uchun muhim)
+      const permission = await Audio.requestPermissionsAsync();
+      if (permission.status !== 'granted') {
+          Alert.alert("Ruxsat yo'q", "Qo'ng'iroq qilish uchun mikrofon kerak!", [
+              { text: "OK", onPress: () => router.back() }
+          ]);
+          return;
       }
-    );
 
-    sipClient.makeCall(
-      (number as string), 
-      () => {
-        // Answered callback
-        setCallStatus('CONNECTED');
-        startRecording(); // Ovozni yozishni gaplashuv boshlanganda yoqamiz
-        timer = setInterval(() => {
-          setCallDuration((prev) => prev + 1);
-        }, 1000);
-      },
-      () => {
-        // Ended callback
-        handleHangUp();
-      }
-    );
+      // 2. SIP-ni ishga tushirish
+      console.log("[CALL] Initializing SIP...");
+      await sipClient.initialize(
+        () => {
+          // Disconnect callback
+          console.log("[CALL] Disconnected");
+          stopRecordingAndUpload(true);
+          router.back();
+        },
+        () => {
+          // General Answered callback (already handled in makeCall, but good to have)
+        }
+      );
+
+      // 3. Qo'ng'iroqni boshlash
+      console.log("[CALL] Making call...");
+      sipClient.makeCall(
+        (number as string), 
+        () => {
+          // Answered callback
+          console.log("[CALL] Answered!");
+          setCallStatus('CONNECTED');
+          startRecording(); 
+          timerRef.current = setInterval(() => {
+            setCallDuration((prev) => {
+              const next = prev + 1;
+              durationRef.current = next;
+              return next;
+            });
+          }, 1000);
+
+        },
+        () => {
+          // Ended callback
+          console.log("[CALL] Ended");
+          handleHangUp();
+        }
+      );
+    };
+
+    initCall();
 
     return () => {
-      clearInterval(timer);
+      if (timerRef.current) clearInterval(timerRef.current);
       sipClient.dispose();
-      if (recording) stopRecordingAndUpload(false);
+      // Cleanup: Agar recording qolib ketgan bo'lsa to'xtatamiz
+      if (recordingRef.current) {
+         recordingRef.current.stopAndUnloadAsync().catch(console.error);
+         recordingRef.current = null;
+      }
     };
+
   }, []);
+
 
   // Format Timer (MM:SS)
   const formatTime = (seconds: number) => {
@@ -91,25 +126,29 @@ export default function CallScreen() {
         Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
       
-      setRecording(recording);
+      recordingRef.current = recording;
       setIsRecording(true);
       console.log('Recording started');
+
     } catch (err) {
       console.error('Failed to start recording', err);
     }
   };
 
   const stopRecordingAndUpload = async (shouldUpload = true) => {
-    if (!recording) return;
+    if (!recordingRef.current) return;
 
     try {
       setIsRecording(false);
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-      setRecording(null);
+      const rec = recordingRef.current;
+      recordingRef.current = null;
+      
+      await rec.stopAndUnloadAsync();
+      const uri = rec.getURI();
       console.log('Recording stopped and saved at', uri);
 
-      if (shouldUpload && uri && callDuration > 2) {
+      if (shouldUpload && uri && durationRef.current > 2) {
+
         // Audio faylni serverga yuklaymiz (API Tahlil uchun)
         uploadAudio(uri);
       }
