@@ -1,9 +1,11 @@
-import { registerGlobals } from 'react-native-webrtc';
+import { Platform, Alert } from 'react-native';
 import { UserAgent, Inviter, SessionState, UserAgentOptions, Registerer, RegistererState } from 'sip.js';
-import { Alert } from 'react-native';
 
-// Polyfill WebRTC for sip.js
-registerGlobals();
+// Polyfill WebRTC for sip.js ONLY on native (iOS/Android), not Web
+if (Platform.OS !== 'web') {
+  const { registerGlobals } = require('react-native-webrtc');
+  registerGlobals();
+}
 
 export class SipClient {
   private userAgent: UserAgent | null = null;
