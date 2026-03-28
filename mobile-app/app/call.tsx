@@ -79,6 +79,15 @@ export default function CallScreen() {
           attempts++;
       }
 
+      if (!(await sipClient.isRegistered())) {
+          Alert.alert(
+            "Xato: SIP ulanmadi", 
+            "Internetni uzib-yoqing yoki Zadarma akkauntini tekshiring.",
+            [{ text: "OK", onPress: () => router.back() }]
+          );
+          return;
+      }
+
       // 4. Qo'ng'iroqni boshlash
       console.log("[CALL] Making call...");
       setCallStatus('RAQAM TERILMOQDA...');

@@ -1,5 +1,5 @@
 import { registerGlobals } from 'react-native-webrtc';
-import { UserAgent, Inviter, SessionState, UserAgentOptions, Registerer } from 'sip.js';
+import { UserAgent, Inviter, SessionState, UserAgentOptions, Registerer, RegistererState } from 'sip.js';
 
 // Polyfill WebRTC for sip.js
 registerGlobals();
@@ -24,26 +24,32 @@ export class SipClient {
       uri: UserAgent.makeURI(sipUri),
       transportOptions: {
         server: wssUrl,
+        connectionTimeout: 10,
+        traceSip: true,
       },
       authorizationPassword: 'Fxbsg93Nj6',
       authorizationUsername: '510156',
-      delegate: {
-        onConnect: () => {
-          console.log('[SIP] WSS Socket Connected');
-          // WSS ulangandan keyin ro'yxatdan o'tamiz
-          this.register();
-        },
-        onDisconnect: (error) => {
-          console.log('[SIP] WSS Socket Disconnected', error);
-          if (this.onCallEnd) this.onCallEnd();
-        }
-      }
     };
 
     this.userAgent = new UserAgent(options);
+    
+    // Transport event listenerlarini to'g'ri biriktiramiz
+    this.userAgent.transport.onDisconnect = (error) => {
+       console.log('[SIP] WSS Socket Disconnected', error);
+       if (this.onCallEnd) this.onCallEnd();
+    };
+
+    this.userAgent.transport.stateChange.addListener((state) => {
+      console.log(`[SIP] Transport State changed to: ${state}`);
+    });
+
     try {
-      await this.userAgent.start();
-      console.log('[SIP] UserAgent is successfully started.');
+      console.log('[SIP] Starting UserAgent...');
+      await this.userAgent.start(); // WSS ga ulanadi
+      console.log('[SIP] UserAgent is successfully started. Now Registering...');
+      
+      // WSS ulangandan keyin birdaniga Ro'yxatdan o'tamiz!
+      this.register();
     } catch (e) {
       console.error("[SIP] UserAgent Start Error:", e);
     }
@@ -52,10 +58,15 @@ export class SipClient {
   private register() {
     if (!this.userAgent) return;
     this.registerer = new Registerer(this.userAgent);
+    
+    // Add state change listener for debugging
+    this.registerer.stateChange.addListener((state: RegistererState) => {
+      console.log(`[SIP] Registerer State changed to: ${state}`);
+    });
+
     this.registerer.register()
       .then(() => {
-        console.log('[SIP] Registered successfully');
-        // Register bo'lganini bilish uchun event jo'natishimiz ham mumkin
+        console.log('[SIP] Registered successfully via UserAgent');
       })
       .catch(e => console.error('[SIP] Registration error', e));
   }
@@ -63,7 +74,7 @@ export class SipClient {
   // Ro'yxatdan o'tishni kutish uchun yordamchi funksiya
   public async isRegistered(): Promise<boolean> {
     if (!this.registerer) return false;
-    return this.registerer.state === 'Registered';
+    return this.registerer.state === RegistererState.Registered;
   }
 
 
