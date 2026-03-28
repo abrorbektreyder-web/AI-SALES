@@ -7,6 +7,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 📌 TASHKILOT (ORGANIZATION) - Zadarma API kalitlari va ATS sozlamalari
+model Organization {
+  id              String   @id @default(uuid())
+  name            String
+  
+  // Zadarma API kalitlari (shifrlangan saqlanadi)
+  zadarmApiKey    String?
+  zadarmApiSecret String?
+  zadarmSipBase   String?  // Masalan: "559324" (ATS prefix)
+  
+  users           User[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 // 📌 FOYDALANUVCHILAR (USER)
 // 📌 BIR MARTALIK LOGIN KODLARI (FOR QR LOGIN)
 model AccessToken {
@@ -20,14 +36,20 @@ model AccessToken {
 }
 
 model User {
-  id            String       @id @default(uuid())
+  id            String        @id @default(uuid())
   name          String
-  phone         String       @unique
+  phone         String        @unique
   email         String?
   company       String?
   password      String
-  role          Role         @default(AGENT)
+  role          Role          @default(AGENT)
   averageScore  Float?
+  
+  // Zadarma ATS ichki raqami (masalan: 100, 101, 102...)
+  sipExtension  String?
+  
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
   
   calls         CallRecord[]
   accessTokens  AccessToken[]
@@ -90,3 +112,4 @@ model Lesson {
   
   createdAt     DateTime     @default(now())
 }
+

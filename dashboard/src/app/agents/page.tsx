@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { 
   UserPlus, Users, Search, ArrowLeft, Phone, Lock, User, 
   Trash2, Edit3, X, Eye, EyeOff, Copy, Check, RefreshCw,
-  PhoneIncoming, Shield, QrCode, Download, Share2
+  PhoneIncoming, Shield, QrCode, Download, Share2, Settings
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,7 @@ interface Agent {
   name: string;
   phone: string;
   averageScore: number | null;
+  sipExtension: string | null;
   createdAt: string;
   _count: { calls: number };
 }
@@ -50,6 +51,10 @@ export default function AgentsPage() {
   const [copiedId, setCopiedId] = useState('');
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // SIP Extension assignment
+  const [editingSipId, setEditingSipId] = useState<string | null>(null);
+  const [sipValue, setSipValue] = useState('');
 
   // ========== FETCH AGENTS ==========
   const fetchAgents = useCallback(async () => {
@@ -209,6 +214,20 @@ export default function AgentsPage() {
     }
   };
 
+  // ========== SIP EXTENSION ASSIGN ==========
+  const handleSipSave = async (agentId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`/api/agents/${agentId}/sip`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ sipExtension: sipValue || null }),
+      });
+      setEditingSipId(null);
+      fetchAgents();
+    } catch { console.error('SIP saqlashda xato'); }
+  };
+
   // ========== HELPERS ==========
   const resetForm = () => {
     setFormName('');
@@ -277,13 +296,21 @@ export default function AgentsPage() {
             Xodimlar boshqaruvi
           </h1>
         </div>
-        <button
-          onClick={() => { resetForm(); setFormPassword(generatePassword()); setShowAddModal(true); }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors text-sm font-semibold shadow-lg shadow-emerald-500/20"
-        >
-          <UserPlus className="size-4" />
-          <span className="hidden sm:inline">Yangi sotuvchi</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <Link href="/settings"
+            className="flex items-center gap-2 px-3 py-2.5 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl transition-colors text-sm border border-white/10"
+          >
+            <Settings className="size-4" />
+            <span className="hidden sm:inline">Sozlamalar</span>
+          </Link>
+          <button
+            onClick={() => { resetForm(); setFormPassword(generatePassword()); setShowAddModal(true); }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors text-sm font-semibold shadow-lg shadow-emerald-500/20"
+          >
+            <UserPlus className="size-4" />
+            <span className="hidden sm:inline">Yangi sotuvchi</span>
+          </button>
+        </div>
       </header>
 
       {/* ===== STATS + SEARCH ===== */}
@@ -340,10 +367,11 @@ export default function AgentsPage() {
       <div className="bg-[#18181b] border border-white/5 rounded-2xl overflow-hidden">
         {/* Table Header */}
         <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-white/[0.02] border-b border-white/5 text-xs font-semibold text-white/40 uppercase tracking-widest">
-          <div className="col-span-4">Sotuvchi</div>
+          <div className="col-span-3">Sotuvchi</div>
           <div className="col-span-2 hidden md:block">Telefon</div>
+          <div className="col-span-2 hidden md:block">ATS Raqam</div>
           <div className="col-span-1 hidden md:block text-center">Ball</div>
-          <div className="col-span-2 hidden md:block text-center">Qo&apos;ng&apos;iroqlar</div>
+          <div className="col-span-1 hidden md:block text-center">Qo&apos;ng&apos;iroq</div>
           <div className="col-span-1 hidden md:block">Sana</div>
           <div className="col-span-2 text-right">Amallar</div>
         </div>
@@ -387,7 +415,7 @@ export default function AgentsPage() {
                   className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-white/5 last:border-0 hover:bg-white/[0.04] transition-all items-center group"
                 >
                   {/* Name */}
-                <div className="col-span-4 flex items-center gap-3">
+                <div className="col-span-3 flex items-center gap-3">
                   <div className={`size-10 rounded-full flex items-center justify-center text-xs font-bold text-white ${color} shrink-0`}>
                     {initials}
                   </div>
@@ -409,6 +437,42 @@ export default function AgentsPage() {
                   </button>
                 </div>
 
+                {/* SIP Extension */}
+                <div className="col-span-2 hidden md:flex items-center">
+                  {editingSipId === agent.id ? (
+                    <div className="flex items-center gap-1 w-full">
+                      <input
+                        autoFocus
+                        type="text"
+                        value={sipValue}
+                        onChange={e => setSipValue(e.target.value)}
+                        placeholder="100"
+                        className="w-16 bg-white/10 border border-purple-500/50 rounded-lg px-2 py-1 text-xs text-white font-mono focus:outline-none"
+                        onKeyDown={e => { if (e.key === 'Enter') handleSipSave(agent.id); if (e.key === 'Escape') setEditingSipId(null); }}
+                      />
+                      <button onClick={() => handleSipSave(agent.id)} className="p-1 text-emerald-400 hover:text-emerald-300">
+                        <Check className="size-3.5" />
+                      </button>
+                      <button onClick={() => setEditingSipId(null)} className="p-1 text-white/30 hover:text-white/60">
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setEditingSipId(agent.id); setSipValue(agent.sipExtension || ''); }}
+                      className={`flex items-center gap-1.5 text-xs rounded-lg px-2.5 py-1.5 transition-all ${
+                        agent.sipExtension
+                          ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono'
+                          : 'bg-white/5 text-white/30 hover:bg-white/10 hover:text-white/60 border border-dashed border-white/10'
+                      }`}
+                      title="ATS raqam biriktirish"
+                    >
+                      <Phone className="size-3" />
+                      {agent.sipExtension || "+ Raqam"}
+                    </button>
+                  )}
+                </div>
+
                 {/* Score */}
                 <div className="col-span-1 hidden md:flex justify-center">
                   <span className={`text-sm font-bold px-2.5 py-1 rounded-lg ${getScoreColor(agent.averageScore)} ${getScoreBg(agent.averageScore)}`}>
@@ -417,8 +481,8 @@ export default function AgentsPage() {
                 </div>
 
                 {/* Calls count */}
-                <div className="col-span-2 hidden md:flex justify-center">
-                  <span className="text-sm text-white/60">{agent._count.calls} ta</span>
+                <div className="col-span-1 hidden md:flex justify-center">
+                  <span className="text-sm text-white/60">{agent._count.calls}</span>
                 </div>
 
                 {/* Date */}

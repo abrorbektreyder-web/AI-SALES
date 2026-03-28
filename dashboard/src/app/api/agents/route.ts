@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
         phone: true,
         role: true,
         averageScore: true,
+        sipExtension: true,
         createdAt: true,
         _count: {
           select: { calls: true },
