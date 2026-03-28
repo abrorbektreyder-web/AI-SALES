@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { View, Text, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Alert, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -16,6 +16,7 @@ export default function CallScreen() {
   const [callDuration, setCallDuration] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [callStatus, setCallStatus] = useState('SOZLANMOQDA...'); 
+  const [errorMessage, setErrorMessage] = useState('');
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const recordingRef = useRef<Audio.Recording | null>(null);
@@ -80,11 +81,7 @@ export default function CallScreen() {
       }
 
       if (!(await sipClient.isRegistered())) {
-          Alert.alert(
-            "Xato: SIP ulanmadi", 
-            "Internetni uzib-yoqing yoki Zadarma akkauntini tekshiring.",
-            [{ text: "OK", onPress: () => router.back() }]
-          );
+          setErrorMessage("Xato: SIP WSS ulana olmadi! (Zadarma WSS to'g'ridan to'g'ri qo'llab quvvatlamasligi mumkin)");
           return;
       }
 
@@ -286,14 +283,19 @@ export default function CallScreen() {
         <Text style={styles.recordingText}>
             {isRecording ? "Ovoz yozilmoqda (AI uchun)..." : ""}
         </Text>
+        {errorMessage ? (
+          <Text style={{color: '#ff4444', fontSize: 16, textAlign: 'center', marginTop: 20, marginHorizontal: 20}}>
+            {errorMessage}
+          </Text>
+        ) : null}
       </View>
 
       {/* Pastki qism - Boshqaruv elementlari */}
       <View style={styles.bottomSection}>
         <Animated.View style={styles.hangupWrapper}>
-          <View onTouchEnd={handleHangUp} style={styles.hangupButton}>
+          <TouchableOpacity onPress={handleHangUp} style={styles.hangupButton}>
              <Ionicons name="call-outline" size={36} color="#FFFFFF" style={{ transform: [{ rotate: '135deg' }] }} />
-          </View>
+          </TouchableOpacity>
           <Text style={styles.hangupText}>Tugatish</Text>
         </Animated.View>
       </View>
