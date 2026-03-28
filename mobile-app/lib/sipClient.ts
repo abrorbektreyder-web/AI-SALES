@@ -1,5 +1,6 @@
 import { registerGlobals } from 'react-native-webrtc';
 import { UserAgent, Inviter, SessionState, UserAgentOptions, Registerer, RegistererState } from 'sip.js';
+import { Alert } from 'react-native';
 
 // Polyfill WebRTC for sip.js
 registerGlobals();
@@ -105,20 +106,26 @@ export class SipClient {
     });
 
 
+    let isEstablished = false;
     this.currentSession.stateChange.addListener((state: SessionState) => {
 
       console.log('[SIP STATE CHANGE]:', state);
       if (state === SessionState.Established) {
+        isEstablished = true;
         onCallAnswered();
       } else if (state === SessionState.Terminated) {
+        if (!isEstablished) {
+           Alert.alert("Qong'iroq rad etildi", "Xato: Hisobda pul yo'q, raqam xato, yoki Zadarma tarmog'i so'rovni bekor qildi (4xx/5xx/6xx).", [{ text: 'OK' }]);
+        }
         onCallEnd();
       }
     });
 
     try {
       await this.currentSession.invite();
-    } catch (e) {
+    } catch (e: any) {
       console.error("[SIP] Invite Error:", e);
+      Alert.alert("WebRTC Xolati / Ruxsat yo'q", e?.message || String(e), [{ text: 'OK' }]);
       onCallEnd();
     }
   }
